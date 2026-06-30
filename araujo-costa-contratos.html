@@ -932,6 +932,14 @@
     ::-webkit-scrollbar-thumb:hover {
       background: var(--muted);
     }
+
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 0px; }
+      #sidebar { display: none; }
+      #app.visible { flex-direction: column; }
+      .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .table-wrap { overflow-x: auto; }
+    }
   </style>
 </head>
 <body>
@@ -1128,21 +1136,21 @@ const DADOS_INICIAIS = [
   {"id":"6","cliente":"ELEN KATIANE OLIVEIRA GUIMARAES","data":"06/09/2025","mes":"Junho","ano":2025,"causa":"Salário Maternidade Rural","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"7","cliente":"THAIANA SARMENTO RODRIGUES","data":"20/06/2025","mes":"Junho","ano":2025,"causa":"Salário Maternidade Rural","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"8","cliente":"RIZONETE RODRIGUES DOS SANTOS","data":"20/06/2025","mes":"Junho","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"9","cliente":"MARCIO DOUGLAS SOUSA DOS SANTOS","data":"2406/2025","mes":"Junho","ano":2025,"causa":"Auxílio Doença Rural","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"9","cliente":"MARCIO DOUGLAS SOUSA DOS SANTOS","data":"24/06/2025","mes":"Junho","ano":2025,"causa":"Auxílio Doença Rural","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"10","cliente":"DAYANA RAQUEL CANTE DE SOUSA","data":"30/06/2025","mes":"Junho","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"11","cliente":"JONAS GUIMARÃES MACHADO","data":"07/07/2025","mes":"Julho","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"12","cliente":"FERNANDO SAMARION","data":"07/11/2025","mes":"Julho","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"13","cliente":"LAIANE CASCAES BATISTA","data":"14/07/2025","mes":"Julho","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"14","cliente":"OLIVIA CAMPOS MATOS","data":"17/07/2025","mes":"Julho","ano":2025,"causa":"Salário Maternidade","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"15","cliente":"JOSIANE SOUSA CASTRO","data":"24/07/2025","mes":"Julho","ano":2025,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"16","cliente":"KENDRIA JHEANE RODRIGUES DOS SANTOS","data":"25/07/2025","mes":"Julho","ano":2025,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"15","cliente":"JOSIANE SOUSA CASTRO","data":"24/07/2025","mes":"Julho","ano":2025,"causa":"Salário Maternidade Rural","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"16","cliente":"KENDRIA JHEANE RODRIGUES DOS SANTOS","data":"25/07/2025","mes":"Julho","ano":2025,"causa":"Salário Maternidade Urbano","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"17","cliente":"GERSIMAR BELO DOS SANTOS","data":"30/07/2025","mes":"Julho","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"18","cliente":"ROSILANE DA CRUZ CASTRO","data":"30/07/2025","mes":"Julho","ano":2025,"causa":"Salário Maternidade","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"19","cliente":"SUELEN GOMES SILVA","data":"30/07/2025","mes":"Julho","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"20","cliente":"ROBERTO CASTRO DE ALBUQUERQUE","data":"08/01/2025","mes":"Agosto","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"21","cliente":"RAIMUNDO NONATO DE LIMA","data":"08/09/2025","mes":"Agosto","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"22","cliente":"JOAQUIM DOS SANTOS RIBEIRO","data":"18/08/2025","mes":"Agosto","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"23","cliente":"SARA DOS SANTOS BARBOSA","data":"22/08/2025","mes":"Agosto","ano":2025,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"23","cliente":"SARA DOS SANTOS BARBOSA","data":"22/08/2025","mes":"Agosto","ano":2025,"causa":"Salário Maternidade Urbano","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"24","cliente":"VANDERLEY FERREIRA DA SILVA","data":"29/08/2025","mes":"Agosto","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"25","cliente":"JOSE ERIVALDO RODRIGUES DA SILVA","data":"29/08/2025","mes":"Agosto","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"26","cliente":"EVERSON SARAIVA SILVA","data":"09/01/2025","mes":"Setembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
@@ -1162,7 +1170,7 @@ const DADOS_INICIAIS = [
   {"id":"40","cliente":"JAIR GERALDO DE SOUSA SAMPAIO","data":"23/10/2025","mes":"Outubro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"41","cliente":"BEATRIZ DE SOUSA PEREIRA","data":"10/03/2025","mes":"Outubro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"42","cliente":"BEATRIZ DE SOUSA PEREIRA","data":"28/10/2025","mes":"Outubro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"43","cliente":"FRANCINALDO VIANA MAGALHAES","data":"28/10/2025","mes":"Outubro","ano":2025,"causa":"AUXILIO DONÇA","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"43","cliente":"FRANCINALDO VIANA MAGALHAES","data":"28/10/2025","mes":"Outubro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"44","cliente":"ELIANA ANDREA NERES GARCIA","data":"30/10/2025","mes":"Outubro","ano":2025,"causa":"Seguro Defeso","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"45","cliente":"HILDERSON DE MELO ROCHA","data":"11/05/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"46","cliente":"FABIANO FERREIRA BARROS","data":"11/06/2025","mes":"Novembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
@@ -1247,7 +1255,7 @@ const DADOS_INICIAIS = [
   {"id":"125","cliente":"ROSINALDO AMORIM DOS SANTOS","data":"27/04/2026","mes":"Abril","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"126","cliente":"MARCIA MILAIANE GOMES DE MACEDO","data":"28/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Maternidade","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"127","cliente":"JOSE ERIVALDO RODRIGUES DA SILVA","data":"28/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"128","cliente":"REGINALDO IMBIRIBA DOS SANTOS","data":"28/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"TRÁFEGO- CARTILHA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"128","cliente":"REGINALDO IMBIRIBA DOS SANTOS","data":"28/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego - Cartilha","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"129","cliente":"WLADEMIL DA SILVA DE SOUZA","data":"30/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"130","cliente":"LUIS RENATO DE SOUSA GONZAGA","data":"30/04/2026","mes":"Abril","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"131","cliente":"MARCOS VINICIOS FALCÃO MOREIRA","data":"30/04/2026","mes":"Abril","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
@@ -1255,16 +1263,16 @@ const DADOS_INICIAIS = [
   {"id":"133","cliente":"RUI GUILHERME DOS SANTOS MOURÃO","data":"05/08/2026","mes":"Maio","ano":2026,"causa":"Ação de Danos Materiais e Morais","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"134","cliente":"ADAILTON MOTA FERREIRA","data":"05/08/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"135","cliente":"MARIA JAIANE DUARTE DA SILVA","data":"05/09/2026","mes":"Maio","ano":2026,"causa":"Ação de Cobrança","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"136","cliente":"MARIA DE FÁTIMA RIBEIRO","data":"05/09/2026","mes":"Maio","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"136","cliente":"MARIA DE FÁTIMA RIBEIRO","data":"05/09/2026","mes":"Maio","ano":2026,"causa":"Salário Maternidade Rural","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"137","cliente":"DELCIVANE VIEIRA AZULAY","data":"05/11/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Rural","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"138","cliente":"MARCOS AGUIAR ROCHA","data":"05/12/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"139","cliente":"ROSANA GONZAGA DE OLIVEIRA","data":"13/05/2026","mes":"Maio","ano":2026,"causa":"BPC","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"140","cliente":"EDINEIDE LOPES DA SILVA","data":"14/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"141","cliente":"ROMISSON SILVA DOS SANTOS","data":"14/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"142","cliente":"SARA DE JESUS MORARES","data":"15/05/2026","mes":"Maio","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"142","cliente":"SARA DE JESUS MORARES","data":"15/05/2026","mes":"Maio","ano":2026,"causa":"Salário Maternidade Rural","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"143","cliente":"OSVALDO NASCIMENTO VAZ","data":"15/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"144","cliente":"OSVALDO NASCIMENTO VAZ","data":"15/05/2026","mes":"Maio","ano":2026,"causa":"Aposentadoria por Invalidez","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"145","cliente":"ANDRESSA CAROLINE COSTA MOURA","data":"18/05/2026","mes":"Maio","ano":2026,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"145","cliente":"ANDRESSA CAROLINE COSTA MOURA","data":"18/05/2026","mes":"Maio","ano":2026,"causa":"Salário Maternidade Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"146","cliente":"JOSIAS DUARTE MARTINS","data":"18/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"147","cliente":"ANTONIO COSTA","data":"18/07/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"148","cliente":"ADEMAR PEREIRA DE MORAES","data":"19/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
@@ -1273,7 +1281,7 @@ const DADOS_INICIAIS = [
   {"id":"151","cliente":"ADRIA VANESSA CARDOSO SOUSA","data":"22/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"152","cliente":"IRANILSON MOTTA DA SILVA","data":"25/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"153","cliente":"RAIMUNDO DE SOUZA PINTO","data":"25/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"154","cliente":"MIRIAN DE OLIVEIRA VINHOTE","data":"30/06/2026","mes":"Maio","ano":2026,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"154","cliente":"MIRIAN DE OLIVEIRA VINHOTE","data":"30/06/2026","mes":"Maio","ano":2026,"causa":"Salário Maternidade Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"155","cliente":"ROSANA MARIA CUNHA BRAGA","data":"06/08/2026","mes":"Maio","ano":2026,"causa":"BPC","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"156","cliente":"VERONICE APARECIDA VARGES BATISTA","data":"27/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"157","cliente":"MARTA TORRES DE SOUSA","data":"27/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
@@ -1296,11 +1304,11 @@ const DADOS_INICIAIS = [
   {"id":"174","cliente":"LUCIETE SOUSA DA SILVA","data":"06/10/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"175","cliente":"LUCIETE SOUSA DA SILVA","data":"06/10/2026","mes":"Junho","ano":2026,"causa":"APSI","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"176","cliente":"LEONARDO JOSE DOS SANTOS BRANDÃO","data":"06/11/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"177","cliente":"ELIENE PEREIRA DA SILVA","data":"06/12/2026","mes":"Junho","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"177","cliente":"ELIENE PEREIRA DA SILVA","data":"06/12/2026","mes":"Junho","ano":2026,"causa":"Salário Maternidade Rural","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"178","cliente":"JARLISSON MACEDO A SILVA","data":"06/12/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"179","cliente":"RAIANE ALVES DOS SANTOS","data":"19/06/2026","mes":"Junho","ano":2026,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"179","cliente":"RAIANE ALVES DOS SANTOS","data":"19/06/2026","mes":"Junho","ano":2026,"causa":"Salário Maternidade Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"180","cliente":"MADSON MACIEL","data":"21/06/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"181","cliente":"RANIELE FERNANDES TAVARES","data":"21/06/2026","mes":"Junho","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"181","cliente":"RANIELE FERNANDES TAVARES","data":"21/06/2026","mes":"Junho","ano":2026,"causa":"Salário Maternidade Rural","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"182","cliente":"VALDEMAR DA SILVA IMBIRIBA","data":"26/06/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"183","cliente":"GAEL VINICIUS CALDEIRA DE CARVALHO","data":"28/06/2026","mes":"Junho","ano":2026,"causa":"Pensão Alimentícia","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"184","cliente":"ELUAN GUILHERME SILVA DOS SANTOS","data":"28/06/2026","mes":"Junho","ano":2026,"causa":"Pensão Alimentícia","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
@@ -1311,7 +1319,7 @@ const DADOS_INICIAIS = [
   {"id":"189","cliente":"JOSÉ ERALDO DE SOUSA FERREIRA","data":"23/06/2026","mes":"Junho","ano":2026,"causa":"Consumidor","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"190","cliente":"JOSE OTAVIO SOUSA DE ALMEIDA","data":"23/06/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"191","cliente":"ELINALDO RODRIGUES MARINHO","data":"23/06/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
-  {"id":"192","cliente":"RAIANE AZULAY GOMES","data":"26/06/2026","mes":"Junho","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"192","cliente":"RAIANE AZULAY GOMES","data":"26/06/2026","mes":"Junho","ano":2026,"causa":"Salário Maternidade Rural","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"193","cliente":"JUVENILSON DE SOUZA NUNES","data":"27/06/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"194","cliente":"RECUPERAR","data":"","mes":"Junho","ano":2026,"causa":"","origem":"","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
   {"id":"195","cliente":"FRANCINALDO DOS ANJOS FEITOSA","data":"28/02/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
@@ -1370,11 +1378,19 @@ const STORAGE = {
   setConfig(v) { STORAGE.set('ac_config', v); },
 
   init() {
+    const normalizarContrato = c => {
+      let n = {...c};
+      if (n.mes === 'Marco') n.mes = 'Março';
+      if (n.causa === 'SALÁRIO MATERNIDADE RURAL')  n.causa = 'Salário Maternidade Rural';
+      if (n.causa === 'SALÁRIO MATERNIDADE URBANO')  n.causa = 'Salário Maternidade Urbano';
+      if (n.causa === 'AUXILIO DONÇA' || n.causa === 'AUXILIO DOENÇA') n.causa = 'Auxílio Doença';
+      if (n.origem === 'TRÁFEGO- CARTILHA' || n.origem === 'TRÁFEGO-CARTILHA') n.origem = 'Tráfego - Cartilha';
+      return n;
+    };
     if (STORAGE.getContratos() === null) {
       const com_ids = DADOS_INICIAIS.map(c => ({
-        ...c,
-        id: UTILS.uuid(),
-        mes: c.mes === 'Marco' ? 'Março' : c.mes
+        ...normalizarContrato(c),
+        id: UTILS.uuid()
       }));
       STORAGE.setContratos(com_ids);
     } else {
@@ -1382,7 +1398,8 @@ const STORAGE = {
       let dados = STORAGE.getContratos();
       let dirty = false;
       dados = dados.map(c => {
-        if (c.mes === 'Marco') { dirty = true; return {...c, mes: 'Março'}; }
+        const n = normalizarContrato(c);
+        if (JSON.stringify(n) !== JSON.stringify(c)) { dirty = true; return n; }
         return c;
       });
       if (dirty) STORAGE.setContratos(dados);
