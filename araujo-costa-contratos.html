@@ -326,10 +326,21 @@
     }
 
     .nav-icon {
-      font-size: 1.1rem;
-      width: 20px;
-      text-align: center;
+      width: 18px;
+      height: 18px;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .sidebar-footer {
@@ -800,7 +811,15 @@
     }
 
     .insight-icon {
-      font-size: 1.3rem;
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+    .insight-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
     }
 
     .insight-title {
@@ -977,23 +996,23 @@
     </div>
     <div class="sidebar-nav">
       <button class="nav-item active" data-section="dashboard" onclick="NAV.ir('dashboard')">
-        <span class="nav-icon">📊</span> Dashboard
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard
       </button>
       <button class="nav-item" data-section="clientes" onclick="NAV.ir('clientes')">
-        <span class="nav-icon">👥</span> Clientes
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="18" cy="8" r="2.5"/><path d="M21 20c0-2.5-1.6-4.6-4-5.4"/></svg></span> Clientes
       </button>
       <button class="nav-item" data-section="relatorios" onclick="NAV.ir('relatorios')">
-        <span class="nav-icon">📈</span> Relatórios
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg></span> Relatórios
       </button>
       <button class="nav-item" data-section="ia" onclick="NAV.ir('ia')">
-        <span class="nav-icon">🤖</span> Agente de IA
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4c0 1.4-.7 2.6-1.8 3.3L16 21H8l1.8-11.7A4 4 0 0 1 8 6a4 4 0 0 1 4-4z"/><path d="M9 21h6"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/></svg></span> Agente de IA
       </button>
       <button class="nav-item" data-section="config" onclick="NAV.ir('config')">
-        <span class="nav-icon">⚙️</span> Configurações
+        <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Configurações
       </button>
     </div>
     <div class="sidebar-footer">
-      <button class="btn-sair" onclick="AUTH.logout()">↩ Sair</button>
+      <button class="btn-sair" onclick="AUTH.logout()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sair</button>
     </div>
   </nav>
 
@@ -1669,7 +1688,7 @@ const RENDER = {
           </div>
         </div>
         <div class="card">
-          <div class="card-label" style="margin-bottom:12px">🤖 Agente de IA</div>
+          <div class="card-label" style="margin-bottom:12px;display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.4-.7 2.6-1.8 3.3L16 21H8l1.8-11.7A4 4 0 0 1 8 6a4 4 0 0 1 4-4z"/><path d="M9 21h6"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/></svg> Agente de IA</div>
           <div style="color:var(--muted);font-size:.82rem;line-height:1.6">
             Acesse <strong style="color:var(--text)">Agente de IA</strong> no menu lateral para gerar insights automáticos sobre os contratos com Claude.
           </div>
@@ -1704,7 +1723,7 @@ const RENDER = {
         <button class="btn btn-primary" onclick="CRUD.abrirNovo()">+ Novo Contrato</button>
       </div>
       <div class="filter-bar">
-        <input type="text" id="f-busca" placeholder="🔍 Buscar cliente..." oninput="RENDER._tabela()" style="min-width:200px">
+        <input type="text" id="f-busca" placeholder="Buscar cliente..." oninput="RENDER._tabela()" style="min-width:200px">
         <select id="f-mes" onchange="RENDER._tabela()">
           <option value="">Todos os meses</option>
           ${MESES_LIST.map(m=>`<option>${m}</option>`).join('')}
@@ -1788,8 +1807,8 @@ const RENDER = {
         <td style="text-align:right;white-space:nowrap">${UTILS.fmtMoeda(c.honorarios)}</td>
         <td style="text-align:right;white-space:nowrap">${UTILS.fmtMoeda(c.valor_recebido)}</td>
         <td style="white-space:nowrap">
-          <button class="btn btn-sm btn-secondary" onclick="CRUD.editar('${c.id}')" title="Editar">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="CRUD.confirmarExcluir('${c.id}')" title="Excluir">🗑️</button>
+          <button class="btn btn-sm btn-secondary" onclick="CRUD.editar('${c.id}')" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn btn-sm btn-danger" onclick="CRUD.confirmarExcluir('${c.id}')" title="Excluir"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </td>
       </tr>`).join('')
     : `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">Nenhum contrato encontrado com os filtros selecionados.</td></tr>`;
@@ -2009,7 +2028,7 @@ const RENDER = {
       <div class="section-title" style="margin-bottom:24px;font-family:var(--font-title);font-size:1.3rem;font-weight:700">Configurações</div>
 
       <div class="card mb-4">
-        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">🔐 Acesso</div>
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Acesso</div>
         <div class="form-grid-2">
           <div class="form-row">
             <label>Usuário</label>
@@ -2024,7 +2043,7 @@ const RENDER = {
       </div>
 
       <div class="card mb-4">
-        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">🤖 Anthropic API</div>
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.4-.7 2.6-1.8 3.3L16 21H8l1.8-11.7A4 4 0 0 1 8 6a4 4 0 0 1 4-4z"/><path d="M9 21h6"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/></svg> Anthropic API</div>
         <div class="form-row">
           <label>API Key</label>
           <input type="password" id="cfg-apikey" value="${UTILS.escapeHtml(cfg.api_key||'')}" placeholder="sk-ant-...">
@@ -2041,30 +2060,30 @@ const RENDER = {
       </div>
 
       <div class="card mb-4">
-        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">🎨 Aparência</div>
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg> Aparência</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap" id="tema-btns"></div>
       </div>
 
       <div class="card mb-4">
-        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">📋 Origens de Captação</div>
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Origens de Captação</div>
         <div id="lista-origens"></div>
         <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="CONFIG.addItem('origens')">+ Adicionar</button>
       </div>
 
       <div class="card mb-4">
-        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">⚖️ Tipos de Causa</div>
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 9l9-6 9 6"/><path d="M6 12v6a3 3 0 0 0 6 0v-6"/><path d="M12 12v6a3 3 0 0 0 6 0v-6"/><line x1="3" y1="22" x2="21" y2="22"/></svg> Tipos de Causa</div>
         <div id="lista-causas"></div>
         <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="CONFIG.addItem('causas')">+ Adicionar</button>
       </div>
 
       <div class="card mb-4">
-        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">🔖 Status de Contrato</div>
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> Status de Contrato</div>
         <div id="lista-status"></div>
         <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="CONFIG.addItem('status')">+ Adicionar</button>
       </div>
 
       <div class="card">
-        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">💾 Dados (${contratos.length} contratos)</div>
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg> Dados (${contratos.length} contratos)</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-secondary" onclick="CONFIG.exportar()">⬇ Exportar JSON</button>
           <label class="btn btn-secondary" style="cursor:pointer">
@@ -2328,7 +2347,7 @@ const IA = {
     if(!cfg.api_key) {
       if(statusEl) statusEl.innerHTML = `
         <div class="card" style="border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08);padding:16px">
-          <span style="color:var(--red)">⚠️ Configure sua <strong>Anthropic API Key</strong> em <strong>Configurações → API</strong> antes de gerar insights.</span>
+          <span style="color:var(--red);display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Configure sua <strong>Anthropic API Key</strong> em <strong>Configurações → API</strong> antes de gerar insights.</span>
         </div>`;
       return;
     }
@@ -2381,9 +2400,11 @@ ${contexto}
 
 Retorne SOMENTE um array JSON válido, sem texto extra, no formato:
 [
-  {"icone":"📊","titulo":"Título curto (máx 50 chars)","texto":"Insight detalhado e prático em 1-2 frases, com números específicos dos dados."},
+  {"categoria":"financeiro","titulo":"Título curto (máx 50 chars)","texto":"Insight detalhado e prático em 1-2 frases, com números específicos dos dados."},
   ...6 objetos total...
 ]
+
+Categorias disponíveis (use exatamente uma dessas por insight): financeiro, captacao, operacional, risco, crescimento, juridico
 
 Foque em: oportunidades de melhoria, riscos financeiros, padrões de captação, eficiência operacional, e recomendações práticas para a gestão do escritório.`;
 
@@ -2414,13 +2435,21 @@ Foque em: oportunidades de melhoria, riscos financeiros, padrões de captação,
       const insights = JSON.parse(match[0]);
       if(!Array.isArray(insights)||insights.length===0) throw new Error('Resposta inesperada da IA.');
 
+      const INSIGHT_ICONS = {
+        financeiro:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+        captacao:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        operacional:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+        risco:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+        crescimento:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+        juridico:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 9l9-6 9 6"/><path d="M6 12v6a3 3 0 0 0 6 0v-6"/><path d="M12 12v6a3 3 0 0 0 6 0v-6"/><line x1="3" y1="22" x2="21" y2="22"/></svg>`
+      };
       if(statusEl) statusEl.innerHTML=`
         <div style="color:var(--muted);font-size:.78rem;margin-bottom:4px">
-          ✅ ${insights.length} insights gerados com <strong>${cfg.modelo||'claude-sonnet-4-6'}</strong>
+          ${insights.length} insights gerados com <strong>${cfg.modelo||'claude-sonnet-4-6'}</strong>
         </div>`;
       if(insightsEl) insightsEl.innerHTML=insights.map(ins=>`
         <div class="insight-card">
-          <div class="insight-icon">${UTILS.escapeHtml(String(ins.icone||'💡'))}</div>
+          <div class="insight-icon">${INSIGHT_ICONS[ins.categoria]||INSIGHT_ICONS.operacional}</div>
           <div class="insight-title">${UTILS.escapeHtml(String(ins.titulo||''))}</div>
           <div class="insight-text">${UTILS.escapeHtml(String(ins.texto||''))}</div>
         </div>`).join('');
@@ -2428,7 +2457,7 @@ Foque em: oportunidades de melhoria, riscos financeiros, padrões de captação,
     } catch(e) {
       if(statusEl) statusEl.innerHTML=`
         <div class="card" style="border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08);padding:16px">
-          <span style="color:var(--red)">❌ Erro: ${UTILS.escapeHtml(e.message)}</span>
+          <span style="color:var(--red);display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Erro: ${UTILS.escapeHtml(e.message)}</span>
           <div style="margin-top:8px;font-size:.75rem;color:var(--muted)">Verifique sua API Key em Configurações → API e tente novamente.</div>
         </div>`;
     } finally {
