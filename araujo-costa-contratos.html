@@ -2039,24 +2039,26 @@ const RENDER = {
             <input type="password" id="cfg-senha" placeholder="Nova senha">
           </div>
         </div>
-        <button class="btn btn-primary" onclick="CONFIG.salvarAcesso()">Salvar Acesso</button>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="CONFIG.salvarAcesso()">Salvar Acesso</button>
       </div>
 
       <div class="card mb-4">
         <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.4-.7 2.6-1.8 3.3L16 21H8l1.8-11.7A4 4 0 0 1 8 6a4 4 0 0 1 4-4z"/><path d="M9 21h6"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/></svg> Anthropic API</div>
-        <div class="form-row">
-          <label>API Key</label>
-          <input type="password" id="cfg-apikey" value="${UTILS.escapeHtml(cfg.api_key||'')}" placeholder="sk-ant-...">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-row">
+            <label>API Key</label>
+            <input type="password" id="cfg-apikey" value="${UTILS.escapeHtml(cfg.api_key||'')}" placeholder="sk-ant-...">
+          </div>
+          <div class="form-row">
+            <label>Modelo Claude</label>
+            <select id="cfg-modelo">
+              <option value="claude-sonnet-4-6"${(cfg.modelo||'claude-sonnet-4-6')==='claude-sonnet-4-6'?' selected':''}>claude-sonnet-4-6 (recomendado)</option>
+              <option value="claude-opus-4-6"${cfg.modelo==='claude-opus-4-6'?' selected':''}>claude-opus-4-6 (mais poderoso)</option>
+              <option value="claude-haiku-4-5-20251001"${cfg.modelo==='claude-haiku-4-5-20251001'?' selected':''}>claude-haiku-4-5 (mais rápido)</option>
+            </select>
+          </div>
         </div>
-        <div class="form-row">
-          <label>Modelo Claude</label>
-          <select id="cfg-modelo">
-            <option value="claude-sonnet-4-6"${(cfg.modelo||'claude-sonnet-4-6')==='claude-sonnet-4-6'?' selected':''}>claude-sonnet-4-6 (recomendado)</option>
-            <option value="claude-opus-4-6"${cfg.modelo==='claude-opus-4-6'?' selected':''}>claude-opus-4-6 (mais poderoso)</option>
-            <option value="claude-haiku-4-5-20251001"${cfg.modelo==='claude-haiku-4-5-20251001'?' selected':''}>claude-haiku-4-5 (mais rápido)</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" onclick="CONFIG.salvarApi()">Salvar API</button>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="CONFIG.salvarApi()">Salvar API</button>
       </div>
 
       <div class="card mb-4">
@@ -2085,9 +2087,9 @@ const RENDER = {
       <div class="card">
         <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg> Dados (${contratos.length} contratos)</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-          <button class="btn btn-secondary" onclick="CONFIG.exportar()">⬇ Exportar JSON</button>
-          <label class="btn btn-secondary" style="cursor:pointer">
-            ⬆ Importar JSON
+          <button class="btn btn-secondary" onclick="CONFIG.exportar()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar JSON</button>
+          <label class="btn btn-secondary" style="cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importar JSON
             <input type="file" accept=".json" onchange="CONFIG.importar(this)" style="display:none">
           </label>
           <span style="font-size:.73rem;color:var(--muted)">Importar substitui todos os contratos atuais</span>
@@ -2263,7 +2265,7 @@ const CONFIG = {
         <input type="text" value="${UTILS.escapeHtml(item)}"
           onchange="CONFIG.editItem('${tipo}',${i},this.value)"
           onblur="CONFIG.editItem('${tipo}',${i},this.value)">
-        <button class="btn btn-sm btn-danger" onclick="CONFIG.removeItem('${tipo}',${i})">✕</button>
+        <button class="btn btn-sm btn-danger" onclick="CONFIG.removeItem('${tipo}',${i})" title="Remover"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>`).join('');
   },
 
