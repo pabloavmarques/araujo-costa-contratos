@@ -1768,10 +1768,286 @@ const RENDER = {
     if(info) info.textContent = `Exibindo ${filtrados.length} de ${contratos.length} contratos`;
   },
 
-  // Placeholders for remaining sections (Tasks 5-7)
-  _relatorios() { document.getElementById('content').innerHTML = '<div class="empty-state">Relatórios em breve...</div>'; },
-  _ia()         { document.getElementById('content').innerHTML = '<div class="empty-state">Agente de IA em breve...</div>'; },
-  _config()     { document.getElementById('content').innerHTML = '<div class="empty-state">Configurações em breve...</div>'; }
+  _relatorios() {
+    const MESES_LIST = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const causas   = STORAGE.getCausas();
+    const origens  = STORAGE.getOrigens();
+    const statusList = STORAGE.getStatusList();
+    document.getElementById('content').innerHTML = `
+      <div class="section-header">
+        <div>
+          <div class="section-title">Relatórios</div>
+          <div class="section-sub">Filtros dinâmicos — todas as visualizações atualizam em tempo real</div>
+        </div>
+      </div>
+      <div class="filter-bar" style="margin-bottom:24px">
+        <select id="r-mes" onchange="RENDER._calcRelatorios()">
+          <option value="">Todos os meses</option>
+          ${MESES_LIST.map(m=>`<option>${m}</option>`).join('')}
+        </select>
+        <select id="r-ano" onchange="RENDER._calcRelatorios()">
+          <option value="">Todos os anos</option>
+          <option>2025</option><option>2026</option>
+        </select>
+        <select id="r-causa" onchange="RENDER._calcRelatorios()">
+          <option value="">Todas as causas</option>
+          ${causas.map(c=>`<option>${UTILS.escapeHtml(c)}</option>`).join('')}
+        </select>
+        <select id="r-origem" onchange="RENDER._calcRelatorios()">
+          <option value="">Todas as origens</option>
+          ${origens.map(o=>`<option>${UTILS.escapeHtml(o)}</option>`).join('')}
+        </select>
+        <select id="r-status" onchange="RENDER._calcRelatorios()">
+          <option value="">Todos os status</option>
+          ${statusList.map(s=>`<option>${UTILS.escapeHtml(s)}</option>`).join('')}
+        </select>
+      </div>
+      <div id="relatorio-content"></div>
+    `;
+    RENDER._calcRelatorios();
+  },
+
+  _calcRelatorios() {
+    const MESES_LIST = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const all = STORAGE.getContratos() || [];
+    const fMes    = document.getElementById('r-mes')?.value    || '';
+    const fAno    = document.getElementById('r-ano')?.value    || '';
+    const fCausa  = document.getElementById('r-causa')?.value  || '';
+    const fOrigem = document.getElementById('r-origem')?.value || '';
+    const fStatus = document.getElementById('r-status')?.value || '';
+
+    const c = all.filter(x => {
+      if(fMes    && x.mes    !== fMes)    return false;
+      if(fAno    && String(x.ano) !== fAno) return false;
+      if(fCausa  && x.causa  !== fCausa)  return false;
+      if(fOrigem && x.origem !== fOrigem) return false;
+      if(fStatus && x.status !== fStatus) return false;
+      return true;
+    });
+
+    const porMes   = MESES_LIST.map(m=>c.filter(x=>x.mes===m).length);
+    const por2025  = MESES_LIST.map(m=>c.filter(x=>x.mes===m&&x.ano===2025).length);
+    const por2026  = MESES_LIST.map(m=>c.filter(x=>x.mes===m&&x.ano===2026).length);
+    const honMes   = MESES_LIST.map(m=>c.filter(x=>x.mes===m).reduce((s,x)=>s+(parseFloat(x.honorarios)||0),0));
+    const recMes   = MESES_LIST.map(m=>c.filter(x=>x.mes===m).reduce((s,x)=>s+(parseFloat(x.valor_recebido)||0),0));
+
+    const causaMap={};
+    c.forEach(x=>{if(x.causa){causaMap[x.causa]=causaMap[x.causa]||{n:0,v:0};causaMap[x.causa].n++;causaMap[x.causa].v+=parseFloat(x.honorarios)||0;}});
+    const causaRank=Object.entries(causaMap).sort((a,b)=>b[1].n-a[1].n);
+
+    const origMap={};
+    c.forEach(x=>{if(x.origem){origMap[x.origem]=(origMap[x.origem]||0)+1;}});
+    const origRank=Object.entries(origMap).sort((a,b)=>b[1]-a[1]);
+    const tot=c.length;
+
+    // Status summary
+    const byStatus={};
+    c.forEach(x=>{byStatus[x.status]=(byStatus[x.status]||0)+1;});
+
+    document.getElementById('relatorio-content').innerHTML = `
+      <div class="card-grid grid-4 mb-4">
+        <div class="card">
+          <div class="card-label">Filtrados</div>
+          <div class="card-value">${tot}</div>
+          <div class="card-sub">de ${all.length} total</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Em Andamento</div>
+          <div class="card-value" style="color:var(--accent)">${byStatus['Em Andamento']||0}</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Ganhos</div>
+          <div class="card-value t-green">${byStatus['Ganho']||0}</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Honorários Total</div>
+          <div class="card-value" style="font-size:1.1rem">${UTILS.fmtMoeda(c.reduce((s,x)=>s+(parseFloat(x.honorarios)||0),0))}</div>
+        </div>
+      </div>
+
+      <div class="card-grid grid-2 mb-4">
+        <div class="card">
+          <div class="card-label" style="margin-bottom:14px">Contratos por Mês (filtrados)</div>
+          <div class="chart-wrap"><canvas id="r-mes-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="margin-bottom:14px">Comparativo Anual: 2025 vs 2026</div>
+          <div class="chart-wrap">
+            <div style="display:flex;gap:16px;margin-bottom:8px">
+              <span style="font-size:.72rem;color:var(--accent);font-weight:700">■ 2026</span>
+              <span style="font-size:.72rem;color:#3b82f6;font-weight:700">■ 2025</span>
+            </div>
+            <canvas id="r-anual-2026-chart"></canvas>
+            <canvas id="r-anual-2025-chart" style="margin-top:8px"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-label" style="margin-bottom:14px">Receita Mensal — Honorários (azul) vs Recebido (verde)</div>
+        <div class="chart-wrap"><canvas id="r-receita-hon-chart"></canvas></div>
+        <div class="chart-wrap" style="margin-top:8px"><canvas id="r-receita-rec-chart"></canvas></div>
+      </div>
+
+      <div class="card-grid grid-2 mb-4">
+        <div class="card">
+          <div class="card-label" style="margin-bottom:12px">Ranking de Causas</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Causa</th><th style="text-align:right">Qtd</th><th style="text-align:right">Honorários</th></tr></thead>
+              <tbody>
+                ${causaRank.length ? causaRank.map(([k,v])=>`
+                  <tr>
+                    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${UTILS.escapeHtml(k||'N/A')}</td>
+                    <td style="text-align:right;font-weight:700">${v.n}</td>
+                    <td style="text-align:right">${UTILS.fmtMoeda(v.v)}</td>
+                  </tr>`).join('')
+                : '<tr><td colspan="3" style="text-align:center;padding:16px;color:var(--muted)">Sem dados</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="margin-bottom:12px">Ranking de Origens de Captação</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Origem</th><th style="text-align:right">Qtd</th><th style="text-align:right">%</th></tr></thead>
+              <tbody>
+                ${origRank.length ? origRank.map(([k,v])=>`
+                  <tr>
+                    <td>${UTILS.escapeHtml(k||'N/A')}</td>
+                    <td style="text-align:right;font-weight:700">${v}</td>
+                    <td style="text-align:right">${tot>0?Math.round((v/tot)*100):0}%</td>
+                  </tr>`).join('')
+                : '<tr><td colspan="3" style="text-align:center;padding:16px;color:var(--muted)">Sem dados</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label" style="margin-bottom:12px">Contratos filtrados (${Math.min(tot,100)} de ${tot})</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>Data</th><th>Causa</th><th>Origem</th><th>Status</th><th style="text-align:right">Honorários</th><th style="text-align:right">Recebido</th></tr></thead>
+            <tbody>
+              ${c.slice(0,100).map(x=>`
+                <tr>
+                  <td style="font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${UTILS.escapeHtml(x.cliente)}</td>
+                  <td style="white-space:nowrap">${UTILS.escapeHtml(x.data||'')}</td>
+                  <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${UTILS.escapeHtml(x.causa||'')}</td>
+                  <td>${UTILS.escapeHtml(x.origem||'')}</td>
+                  <td>${UTILS.badgeStatus(x.status)}</td>
+                  <td style="text-align:right">${UTILS.fmtMoeda(x.honorarios)}</td>
+                  <td style="text-align:right">${UTILS.fmtMoeda(x.valor_recebido)}</td>
+                </tr>`).join('')}
+              ${tot>100?`<tr><td colspan="7" style="text-align:center;padding:12px;color:var(--muted)">... e mais ${tot-100} contratos. Use os filtros para refinar.</td></tr>`:''}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    requestAnimationFrame(()=>{
+      CHART.barras('r-mes-chart', MESES_LIST.map(m=>m.slice(0,3)), porMes);
+      CHART.barras('r-anual-2026-chart', MESES_LIST.map(m=>m.slice(0,3)), por2026);
+      CHART.barras('r-anual-2025-chart', MESES_LIST.map(m=>m.slice(0,3)), por2025, '#3b82f6');
+      CHART.barras('r-receita-hon-chart', MESES_LIST.map(m=>m.slice(0,3)), honMes, '#3b82f6');
+      CHART.barras('r-receita-rec-chart', MESES_LIST.map(m=>m.slice(0,3)), recMes, '#22c55e');
+    });
+  },
+
+  _ia() {
+    document.getElementById('content').innerHTML = `
+      <div class="section-header">
+        <div>
+          <div class="section-title">Agente de IA</div>
+          <div class="section-sub">Insights automáticos sobre os contratos — powered by Claude (Anthropic)</div>
+        </div>
+        <button class="btn btn-primary" onclick="IA.gerar()" id="btn-gerar-ia">✨ Gerar Insights</button>
+      </div>
+      <div id="ia-status" style="margin-bottom:20px"></div>
+      <div id="ia-insights" class="card-grid grid-2"></div>
+    `;
+  },
+
+  _config() {
+    const cfg = STORAGE.getConfig();
+    const contratos = STORAGE.getContratos()||[];
+    document.getElementById('content').innerHTML = `
+      <div class="section-title" style="margin-bottom:24px;font-family:var(--font-title);font-size:1.3rem;font-weight:700">Configurações</div>
+
+      <div class="card mb-4">
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">🔐 Acesso</div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label>Usuário</label>
+            <input type="text" id="cfg-usuario" value="${UTILS.escapeHtml(cfg.usuario||'')}">
+          </div>
+          <div class="form-row">
+            <label>Nova Senha (deixe em branco para manter)</label>
+            <input type="password" id="cfg-senha" placeholder="Nova senha">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="CONFIG.salvarAcesso()">Salvar Acesso</button>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">🤖 Anthropic API</div>
+        <div class="form-row">
+          <label>API Key</label>
+          <input type="password" id="cfg-apikey" value="${UTILS.escapeHtml(cfg.api_key||'')}" placeholder="sk-ant-...">
+        </div>
+        <div class="form-row">
+          <label>Modelo Claude</label>
+          <select id="cfg-modelo">
+            <option value="claude-sonnet-4-6"${(cfg.modelo||'claude-sonnet-4-6')==='claude-sonnet-4-6'?' selected':''}>claude-sonnet-4-6 (recomendado)</option>
+            <option value="claude-opus-4-6"${cfg.modelo==='claude-opus-4-6'?' selected':''}>claude-opus-4-6 (mais poderoso)</option>
+            <option value="claude-haiku-4-5-20251001"${cfg.modelo==='claude-haiku-4-5-20251001'?' selected':''}>claude-haiku-4-5 (mais rápido)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="CONFIG.salvarApi()">Salvar API</button>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">🎨 Aparência</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap" id="tema-btns"></div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">📋 Origens de Captação</div>
+        <div id="lista-origens"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="CONFIG.addItem('origens')">+ Adicionar</button>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">⚖️ Tipos de Causa</div>
+        <div id="lista-causas"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="CONFIG.addItem('causas')">+ Adicionar</button>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">🔖 Status de Contrato</div>
+        <div id="lista-status"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="CONFIG.addItem('status')">+ Adicionar</button>
+      </div>
+
+      <div class="card">
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem">💾 Dados (${contratos.length} contratos)</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-secondary" onclick="CONFIG.exportar()">⬇ Exportar JSON</button>
+          <label class="btn btn-secondary" style="cursor:pointer">
+            ⬆ Importar JSON
+            <input type="file" accept=".json" onchange="CONFIG.importar(this)" style="display:none">
+          </label>
+          <span style="font-size:.73rem;color:var(--muted)">Importar substitui todos os contratos atuais</span>
+        </div>
+      </div>
+    `;
+    CONFIG._renderTemaBtns();
+    CONFIG.renderListas();
+  },
 };
 
 // ═══════════════════════════════════════════════
@@ -1865,6 +2141,268 @@ const CRUD = {
       document.getElementById('modal-confirm').classList.remove('open');
       RENDER._clientes();
     };
+  }
+};
+
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const CONFIG = {
+  salvarAcesso() {
+    const cfg = STORAGE.getConfig();
+    const novoUser  = document.getElementById('cfg-usuario')?.value.trim();
+    const novaSenha = document.getElementById('cfg-senha')?.value;
+    if(novoUser) cfg.usuario = novoUser;
+    if(novaSenha) cfg.senha = novaSenha;
+    STORAGE.setConfig(cfg);
+    alert('Acesso atualizado! Use as novas credenciais no próximo login.');
+  },
+
+  salvarApi() {
+    const cfg = STORAGE.getConfig();
+    cfg.api_key = document.getElementById('cfg-apikey')?.value.trim() || '';
+    cfg.modelo  = document.getElementById('cfg-modelo')?.value || 'claude-sonnet-4-6';
+    STORAGE.setConfig(cfg);
+    alert('Configurações de API salvas!');
+  },
+
+  _renderTemaBtns() {
+    const cfg = STORAGE.getConfig();
+    const temas = [
+      {k:'advocacia', n:'Advocacia', c:'#C4962A'},
+      {k:'dark',      n:'Dark',      c:'#4a90e2'},
+      {k:'light',     n:'Light',     c:'#2563eb'},
+      {k:'neon',      n:'Neon',      c:'#00C26F'}
+    ];
+    const el = document.getElementById('tema-btns');
+    if(!el) return;
+    el.innerHTML = temas.map(t=>`
+      <button onclick="CONFIG.setTema('${t.k}')" style="
+        padding:12px 24px;border-radius:var(--rs);
+        border:2px solid ${(cfg.tema||'advocacia')===t.k?t.c:'var(--border)'};
+        background:var(--bg3);
+        color:${(cfg.tema||'advocacia')===t.k?t.c:'var(--muted)'};
+        font-weight:${(cfg.tema||'advocacia')===t.k?'700':'500'};
+        font-size:.85rem;cursor:pointer;transition:all .15s;font-family:var(--font-body)">
+        ${t.n}
+      </button>`).join('');
+  },
+
+  setTema(tema) {
+    const cfg = STORAGE.getConfig();
+    cfg.tema = tema;
+    STORAGE.setConfig(cfg);
+    document.documentElement.setAttribute('data-tema', tema);
+    const nomes = {advocacia:'Advocacia',dark:'Dark',light:'Light',neon:'Neon'};
+    const badge = document.getElementById('tema-badge');
+    if(badge) badge.textContent = nomes[tema] || tema;
+    CONFIG._renderTemaBtns();
+  },
+
+  renderListas() {
+    CONFIG._renderLista('origens', STORAGE.getOrigens(),    'lista-origens');
+    CONFIG._renderLista('causas',  STORAGE.getCausas(),     'lista-causas');
+    CONFIG._renderLista('status',  STORAGE.getStatusList(), 'lista-status');
+  },
+
+  _renderLista(tipo, arr, containerId) {
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    el.innerHTML = arr.map((item,i)=>`
+      <div class="ref-list-item">
+        <input type="text" value="${UTILS.escapeHtml(item)}"
+          onchange="CONFIG.editItem('${tipo}',${i},this.value)"
+          onblur="CONFIG.editItem('${tipo}',${i},this.value)">
+        <button class="btn btn-sm btn-danger" onclick="CONFIG.removeItem('${tipo}',${i})">✕</button>
+      </div>`).join('');
+  },
+
+  _getArr(tipo) {
+    if(tipo==='origens') return STORAGE.getOrigens();
+    if(tipo==='causas')  return STORAGE.getCausas();
+    if(tipo==='status')  return STORAGE.getStatusList();
+    return [];
+  },
+  _setArr(tipo, arr) {
+    if(tipo==='origens') STORAGE.setOrigens(arr);
+    else if(tipo==='causas')  STORAGE.setCausas(arr);
+    else if(tipo==='status')  STORAGE.setStatusList(arr);
+  },
+
+  addItem(tipo) {
+    const arr = CONFIG._getArr(tipo);
+    arr.push('Novo item');
+    CONFIG._setArr(tipo, arr);
+    CONFIG.renderListas();
+  },
+
+  editItem(tipo, idx, val) {
+    const arr = CONFIG._getArr(tipo);
+    if(idx>=0&&idx<arr.length) { arr[idx]=val.trim(); CONFIG._setArr(tipo,arr); }
+  },
+
+  removeItem(tipo, idx) {
+    const arr = CONFIG._getArr(tipo);
+    arr.splice(idx,1);
+    CONFIG._setArr(tipo,arr);
+    CONFIG.renderListas();
+  },
+
+  exportar() {
+    const contratos = STORAGE.getContratos()||[];
+    const blob = new Blob([JSON.stringify(contratos,null,2)],{type:'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `araujo-costa-contratos-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+
+  importar(input) {
+    const file = input.files?.[0];
+    if(!file) return;
+    if(!confirm('Importar este JSON irá SUBSTITUIR todos os contratos atuais. Confirma?')) {
+      input.value=''; return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const dados = JSON.parse(e.target.result);
+        if(!Array.isArray(dados)) throw new Error('O arquivo deve conter um array JSON.');
+        STORAGE.setContratos(dados);
+        alert(`${dados.length} contratos importados com sucesso!`);
+        RENDER._config();
+      } catch(err) {
+        alert('Erro ao importar: '+err.message);
+      }
+      input.value='';
+    };
+    reader.readAsText(file);
+  }
+};
+
+// ═══════════════════════════════════════════════
+// IA
+// ═══════════════════════════════════════════════
+const IA = {
+  async gerar() {
+    const cfg = STORAGE.getConfig();
+    const statusEl   = document.getElementById('ia-status');
+    const insightsEl = document.getElementById('ia-insights');
+    const btn        = document.getElementById('btn-gerar-ia');
+
+    if(!cfg.api_key) {
+      if(statusEl) statusEl.innerHTML = `
+        <div class="card" style="border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08);padding:16px">
+          <span style="color:var(--red)">⚠️ Configure sua <strong>Anthropic API Key</strong> em <strong>Configurações → API</strong> antes de gerar insights.</span>
+        </div>`;
+      return;
+    }
+
+    if(btn) btn.disabled = true;
+    if(statusEl) statusEl.innerHTML = `
+      <div style="text-align:center;padding:40px">
+        <div class="spinner"></div>
+        <div style="margin-top:16px;color:var(--muted);font-size:.85rem">Analisando ${(STORAGE.getContratos()||[]).length} contratos com Claude...</div>
+      </div>`;
+    if(insightsEl) insightsEl.innerHTML = '';
+
+    try {
+      const contratos = STORAGE.getContratos() || [];
+      const total     = contratos.length;
+      const ganhos    = contratos.filter(c=>c.status==='Ganho').length;
+      const perdidos  = contratos.filter(c=>c.status==='Perdido').length;
+      const andamento = contratos.filter(c=>c.status==='Em Andamento').length;
+      const aguardando= contratos.filter(c=>c.status==='Aguardando Decisão').length;
+      const taxaSucesso=(ganhos+perdidos)>0?Math.round((ganhos/(ganhos+perdidos))*100):0;
+      const totalHon  = contratos.reduce((s,c)=>s+(parseFloat(c.honorarios)||0),0);
+      const totalRec  = contratos.reduce((s,c)=>s+(parseFloat(c.valor_recebido)||0),0);
+      const totalEsp  = contratos.reduce((s,c)=>s+(parseFloat(c.valor_esperado)||0),0);
+      const aReceber  = Math.max(0,totalEsp-totalRec);
+
+      const causaCount={};
+      contratos.forEach(c=>{if(c.causa)causaCount[c.causa]=(causaCount[c.causa]||0)+1;});
+      const causaTop3=Object.entries(causaCount).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k}(${v})`).join(', ');
+
+      const origCount={};
+      contratos.forEach(c=>{if(c.origem)origCount[c.origem]=(origCount[c.origem]||0)+1;});
+      const origTop3=Object.entries(origCount).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k}(${v})`).join(', ');
+
+      const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+      const porMesRecente=MESES.map(m=>({mes:m,n:contratos.filter(c=>c.mes===m).length})).filter(x=>x.n>0).slice(-6);
+
+      const contexto=`Escritório: Araujo Costa Advogados Associados (advocacia previdenciária)
+Total de contratos: ${total}
+Status: Em Andamento(${andamento}), Ganho(${ganhos}), Perdido(${perdidos}), Aguardando Decisão(${aguardando})
+Taxa de sucesso (ganhos vs perdidos): ${taxaSucesso}%
+Financeiro: Honorários contratados=R$${totalHon.toFixed(2)}, Recebido=R$${totalRec.toFixed(2)}, A receber=R$${aReceber.toFixed(2)}
+Top 3 causas: ${causaTop3}
+Top 3 origens de captação: ${origTop3}
+Contratos por mês recentes: ${porMesRecente.map(x=>`${x.mes}(${x.n})`).join(', ')}`;
+
+      const prompt=`Você é um assistente jurídico especializado em advocacia previdenciária. Analise os dados abaixo do escritório Araujo Costa Advogados Associados e gere exatamente 6 insights objetivos, práticos e relevantes em português brasileiro.
+
+Dados do escritório:
+${contexto}
+
+Retorne SOMENTE um array JSON válido, sem texto extra, no formato:
+[
+  {"icone":"📊","titulo":"Título curto (máx 50 chars)","texto":"Insight detalhado e prático em 1-2 frases, com números específicos dos dados."},
+  ...6 objetos total...
+]
+
+Foque em: oportunidades de melhoria, riscos financeiros, padrões de captação, eficiência operacional, e recomendações práticas para a gestão do escritório.`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key': cfg.api_key,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body: JSON.stringify({
+          model: cfg.modelo || 'claude-sonnet-4-6',
+          max_tokens: 1024,
+          messages:[{role:'user', content:prompt}]
+        })
+      });
+
+      if(!resp.ok){
+        const err=await resp.json().catch(()=>({error:{message:`HTTP ${resp.status}`}}));
+        throw new Error(err.error?.message||`HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const texto = data.content?.[0]?.text || '';
+      const match = texto.match(/\[[\s\S]*\]/);
+      if(!match) throw new Error('Claude não retornou um JSON válido. Tente novamente.');
+      const insights = JSON.parse(match[0]);
+      if(!Array.isArray(insights)||insights.length===0) throw new Error('Resposta inesperada da IA.');
+
+      if(statusEl) statusEl.innerHTML=`
+        <div style="color:var(--muted);font-size:.78rem;margin-bottom:4px">
+          ✅ ${insights.length} insights gerados com <strong>${cfg.modelo||'claude-sonnet-4-6'}</strong>
+        </div>`;
+      if(insightsEl) insightsEl.innerHTML=insights.map(ins=>`
+        <div class="insight-card">
+          <div class="insight-icon">${UTILS.escapeHtml(String(ins.icone||'💡'))}</div>
+          <div class="insight-title">${UTILS.escapeHtml(String(ins.titulo||''))}</div>
+          <div class="insight-text">${UTILS.escapeHtml(String(ins.texto||''))}</div>
+        </div>`).join('');
+
+    } catch(e) {
+      if(statusEl) statusEl.innerHTML=`
+        <div class="card" style="border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08);padding:16px">
+          <span style="color:var(--red)">❌ Erro: ${UTILS.escapeHtml(e.message)}</span>
+          <div style="margin-top:8px;font-size:.75rem;color:var(--muted)">Verifique sua API Key em Configurações → API e tente novamente.</div>
+        </div>`;
+    } finally {
+      if(btn) btn.disabled=false;
+    }
   }
 };
 
