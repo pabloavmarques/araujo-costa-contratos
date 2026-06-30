@@ -9,6 +9,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* ============================================================
+       SHARED TOKENS
+       ============================================================ */
+    :root {
+      --r: 12px;
+      --rs: 8px;
+      --sidebar-w: 220px;
+      --green: #22c55e; --green-d: #14532d;
+      --red: #ef4444; --red-d: #7f1d1d;
+      --blue: #3b82f6; --blue-d: #1e3a8a;
+      --yellow: #f59e0b; --yellow-d: #78350f;
+    }
+
+    /* ============================================================
        THEME: advocacia (default / :root)
        ============================================================ */
     :root,
@@ -26,24 +39,11 @@
       --gold-l: #F0D890;
       --gold-d: #9A7018;
 
-      --green:  #22c55e;
-      --green-d:#14532d;
-      --red:    #ef4444;
-      --red-d:  #7f1d1d;
-      --blue:   #3b82f6;
-      --blue-d: #1e3a8a;
-      --yellow: #f59e0b;
-      --yellow-d:#78350f;
-
-      --r:   12px;
-      --rs:  8px;
-
       --font-title: 'Playfair Display', serif;
       --font-body:  'Montserrat', sans-serif;
 
       --accent:   var(--gold);
       --accent-l: var(--gold-l);
-      --sidebar-w: 220px;
     }
 
     /* ============================================================
@@ -943,15 +943,17 @@
   <div class="login-box">
     <div class="login-logo">Araujo Costa</div>
     <div class="login-sub">Advogados Associados · Gestão de Contratos</div>
+    <form onsubmit="AUTH.login();return false;" autocomplete="on">
     <div class="login-field">
-      <label>Usuário</label>
+      <label for="login-user">Usuário</label>
       <input type="text" id="login-user" placeholder="araujo.costa" autocomplete="username">
     </div>
     <div class="login-field">
-      <label>Senha</label>
+      <label for="login-pass">Senha</label>
       <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
     </div>
     <button class="login-btn" onclick="AUTH.login()">Entrar</button>
+    </form>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
@@ -1007,7 +1009,7 @@
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" id="modal-titulo">Novo Contrato</div>
-      <button class="modal-close" onclick="CRUD.fecharModal()">✕</button>
+      <button class="modal-close" aria-label="Fechar" onclick="CRUD.fecharModal()">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="form-id">
@@ -1068,7 +1070,7 @@
   <div class="modal" style="max-width:380px">
     <div class="modal-header">
       <div class="modal-title">Confirmar exclusão</div>
-      <button class="modal-close" onclick="document.getElementById('modal-confirm').classList.remove('open')">✕</button>
+      <button class="modal-close" aria-label="Fechar" onclick="document.getElementById('modal-confirm').classList.remove('open')">✕</button>
     </div>
     <div class="modal-body">
       <p style="font-size:.9rem;color:var(--muted)">Tem certeza que deseja excluir este contrato? Esta ação não pode ser desfeita.</p>
