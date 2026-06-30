@@ -1084,7 +1084,794 @@
 
 <script>
 'use strict';
-// JS will be added in subsequent tasks
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+const UTILS = {
+  uuid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  },
+  fmtMoeda(v) {
+    return 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  },
+  fmtNum(v) {
+    return (parseInt(v)||0).toLocaleString('pt-BR');
+  },
+  mesToNum(mes) {
+    return ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+            'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].indexOf(mes)+1;
+  },
+  badgeStatus(status) {
+    const map = {
+      'Em Andamento':'badge-em-andamento',
+      'Ganho':'badge-ganho',
+      'Perdido':'badge-perdido',
+      'Aguardando Decisão':'badge-aguardando'
+    };
+    return `<span class="badge ${map[status]||'badge-em-andamento'}">${status||'Em Andamento'}</span>`;
+  },
+  escapeHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+};
+
+// ═══════════════════════════════════════════════
+// DADOS INICIAIS (203 contratos da planilha)
+// ═══════════════════════════════════════════════
+const DADOS_INICIAIS = [
+  {"id":"1","cliente":"EVANDRO PEREIRA BATISTA","data":"27/05/2025","mes":"Maio","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"2","cliente":"EDELVANO SILVEIRA DE OLIVEIRA","data":"28/05/2025","mes":"Maio","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"3","cliente":"LEUDILENE SOBRAL DA SILVA","data":"06/04/2025","mes":"Junho","ano":2025,"causa":"Salário Maternidade Rural","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"4","cliente":"MANOEL DE SOUSA DAS CHAGAS","data":"06/05/2025","mes":"Junho","ano":2025,"causa":"Planejamento Previdenciário","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"5","cliente":"LANA CRISTINA DOS SANTOS","data":"06/06/2025","mes":"Junho","ano":2025,"causa":"Salário Maternidade Urbano","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"6","cliente":"ELEN KATIANE OLIVEIRA GUIMARAES","data":"06/09/2025","mes":"Junho","ano":2025,"causa":"Salário Maternidade Rural","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"7","cliente":"THAIANA SARMENTO RODRIGUES","data":"20/06/2025","mes":"Junho","ano":2025,"causa":"Salário Maternidade Rural","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"8","cliente":"RIZONETE RODRIGUES DOS SANTOS","data":"20/06/2025","mes":"Junho","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"9","cliente":"MARCIO DOUGLAS SOUSA DOS SANTOS","data":"2406/2025","mes":"Junho","ano":2025,"causa":"Auxílio Doença Rural","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"10","cliente":"DAYANA RAQUEL CANTE DE SOUSA","data":"30/06/2025","mes":"Junho","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"11","cliente":"JONAS GUIMARÃES MACHADO","data":"07/07/2025","mes":"Julho","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"12","cliente":"FERNANDO SAMARION","data":"07/11/2025","mes":"Julho","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"13","cliente":"LAIANE CASCAES BATISTA","data":"14/07/2025","mes":"Julho","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"14","cliente":"OLIVIA CAMPOS MATOS","data":"17/07/2025","mes":"Julho","ano":2025,"causa":"Salário Maternidade","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"15","cliente":"JOSIANE SOUSA CASTRO","data":"24/07/2025","mes":"Julho","ano":2025,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"16","cliente":"KENDRIA JHEANE RODRIGUES DOS SANTOS","data":"25/07/2025","mes":"Julho","ano":2025,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"17","cliente":"GERSIMAR BELO DOS SANTOS","data":"30/07/2025","mes":"Julho","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"18","cliente":"ROSILANE DA CRUZ CASTRO","data":"30/07/2025","mes":"Julho","ano":2025,"causa":"Salário Maternidade","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"19","cliente":"SUELEN GOMES SILVA","data":"30/07/2025","mes":"Julho","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"20","cliente":"ROBERTO CASTRO DE ALBUQUERQUE","data":"08/01/2025","mes":"Agosto","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"21","cliente":"RAIMUNDO NONATO DE LIMA","data":"08/09/2025","mes":"Agosto","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"22","cliente":"JOAQUIM DOS SANTOS RIBEIRO","data":"18/08/2025","mes":"Agosto","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"23","cliente":"SARA DOS SANTOS BARBOSA","data":"22/08/2025","mes":"Agosto","ano":2025,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"24","cliente":"VANDERLEY FERREIRA DA SILVA","data":"29/08/2025","mes":"Agosto","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"25","cliente":"JOSE ERIVALDO RODRIGUES DA SILVA","data":"29/08/2025","mes":"Agosto","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"26","cliente":"EVERSON SARAIVA SILVA","data":"09/01/2025","mes":"Setembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"27","cliente":"ROSILENE RIBEIRO PEREIRA","data":"09/02/2025","mes":"Setembro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"28","cliente":"SANDRA MARIA GOMES DA SILVA","data":"13/09/2025","mes":"Setembro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"29","cliente":"FRANCISCO EVERTON NOTREVE","data":"23/09/2025","mes":"Setembro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"30","cliente":"JOSÉ ERALDO DE SOUSA FERREIRA","data":"24/09/2025","mes":"Setembro","ano":2025,"causa":"Aposentadoria por Idade Rural","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"31","cliente":"FRANCISCO AILTON MACHADO AVINTE","data":"24/09/2025","mes":"Setembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"32","cliente":"FRANCIENE PINTO FERNANDES","data":"30/09/2025","mes":"Setembro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"33","cliente":"DALIANE DA COSTA MONTEIRO","data":"30/09/2025","mes":"Setembro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"34","cliente":"FÁTIMA JOEDNA FERREIRA TAPAJÓS","data":"09/03/2025","mes":"Setembro","ano":2025,"causa":"BPC","origem":"RUI","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"35","cliente":"LEOZIETE RODRIGUES BATISTA","data":"17/09/2025","mes":"Setembro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"36","cliente":"FRANCENILDA SUELEN LOPES ARAÚJO","data":"09/10/2025","mes":"Setembro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"37","cliente":"GEANE MARIA DA SILVA LIRA","data":"10/06/2025","mes":"Outubro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"38","cliente":"RONILSON SOUSA DA SILVA","data":"13/10/2025","mes":"Outubro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"39","cliente":"ANTONIO FERNANDO COSTA VINHOTE","data":"20/10/2025","mes":"Outubro","ano":2025,"causa":"Aposentadoria Rural","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"40","cliente":"JAIR GERALDO DE SOUSA SAMPAIO","data":"23/10/2025","mes":"Outubro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"41","cliente":"BEATRIZ DE SOUSA PEREIRA","data":"10/03/2025","mes":"Outubro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"42","cliente":"BEATRIZ DE SOUSA PEREIRA","data":"28/10/2025","mes":"Outubro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"43","cliente":"FRANCINALDO VIANA MAGALHAES","data":"28/10/2025","mes":"Outubro","ano":2025,"causa":"AUXILIO DONÇA","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"44","cliente":"ELIANA ANDREA NERES GARCIA","data":"30/10/2025","mes":"Outubro","ano":2025,"causa":"Seguro Defeso","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"45","cliente":"HILDERSON DE MELO ROCHA","data":"11/05/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"46","cliente":"FABIANO FERREIRA BARROS","data":"11/06/2025","mes":"Novembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"47","cliente":"JOELSON SILVA DIAS","data":"11/08/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"48","cliente":"ELIZANDRO BRAGA FERNANDES","data":"11/07/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"49","cliente":"ALBENICE COSTA DA SILVA","data":"11/10/2025","mes":"Novembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"50","cliente":"JOSIANE BARBOSA DOS SANTOS PINTO","data":"11/10/2025","mes":"Novembro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"51","cliente":"MÁRCIA CRISTINA PESSOA DA SILVA","data":"11/11/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"52","cliente":"RAIRE SOUSA DA SILVA","data":"14/11/2025","mes":"Novembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"53","cliente":"RAIMUNDO DE JESUS","data":"28/11/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"54","cliente":"MARCILENE FERREIRA DOS SANTOS","data":"29/11/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"55","cliente":"ANA CORREIRA DA SILVA ALVES","data":"11/10/2025","mes":"Novembro","ano":2025,"causa":"Pensão por Morte","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"56","cliente":"MARIA ELIVANE DE JESUS SILVA","data":"17/11/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"Pro Bono","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"57","cliente":"CLEIDIANE DA SILVA LAVOR","data":"11/11/2025","mes":"Novembro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"58","cliente":"MARCOS SABINO DE ARAUJO OLIVEIRA","data":"14/12/2025","mes":"Dezembro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"59","cliente":"SILVERIO VIANA DOS SANTOS","data":"12/03/2025","mes":"Dezembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"60","cliente":"MANOEL AILSON CASTRO DOS SANTOS","data":"20/10/2025","mes":"Dezembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"61","cliente":"ARLEN FERREIRA ALENCAR","data":"27/11/2025","mes":"Dezembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"62","cliente":"SILANY SANTA ROSA SOUZA","data":"22/11/2025","mes":"Dezembro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"63","cliente":"EVERSON RAYAN SILVA GUIMARAES","data":"15/01/2025","mes":"Dezembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"64","cliente":"ANDRESSA CAROLINE COSTA MOURA","data":"12/10/2025","mes":"Dezembro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"65","cliente":"PATRICIA BRAGA SENA","data":"20/12/2025","mes":"Dezembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"66","cliente":"RECUPERAÇÃO","data":"","mes":"Dezembro","ano":2025,"causa":"","origem":"","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"67","cliente":"ALESSANDRA SOUSA DOS SANTOS","data":"10/02/2025","mes":"Dezembro","ano":2025,"causa":"Salário Maternidade","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"68","cliente":"MARINALDO DA SILVA PACHECO","data":"10/01/2025","mes":"Dezembro","ano":2025,"causa":"Auxílio Doença","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"69","cliente":"JESSICA PEREIRA DE SOUSA","data":"10/03/2025","mes":"Dezembro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"70","cliente":"NELITA ALVES DA SILVA","data":"08/10/2025","mes":"Dezembro","ano":2025,"causa":"Salário Maternidade","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"71","cliente":"MARIA DIVANILCE SOUSA VALENTE","data":"08/10/2025","mes":"Dezembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"72","cliente":"ROSIVAN ROCHA SILVA","data":"13/10/2025","mes":"Dezembro","ano":2025,"causa":"Auxílio Doença","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"73","cliente":"SAMUEL TELES PEREIRA","data":"22/10/2025","mes":"Dezembro","ano":2025,"causa":"Planejamento Previdenciário","origem":"BIA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"74","cliente":"TAMILLES SUSSUARANA CARDOSO","data":"01/07/2026","mes":"Janeiro","ano":2026,"causa":"Seguro Defeso","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"75","cliente":"DARLENE NUNES DA SILVA","data":"01/12/2026","mes":"Janeiro","ano":2026,"causa":"Seguro Defeso","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"76","cliente":"AMADEU MALCHER SILVA","data":"19/01/2026","mes":"Janeiro","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"77","cliente":"SIDNEI DOS SANTOS SOUSA","data":"14/01/2026","mes":"Janeiro","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"78","cliente":"MARIVALDO RAMOS PINTO","data":"16/01/2026","mes":"Janeiro","ano":2026,"causa":"Auxílio Acidente","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"79","cliente":"AMADEU MALCHER SILVA","data":"19/01/2026","mes":"Janeiro","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"80","cliente":"MARIA ELIENE DA SILVA BRITO","data":"19/01/2026","mes":"Janeiro","ano":2026,"causa":"Auxílio Doença","origem":"Indicação A","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"81","cliente":"MANOEL SOUSA DAS CHAGAS","data":"21/01/2026","mes":"Janeiro","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"82","cliente":"JOCIANE PARATINGA DO CARMO","data":"21/01/2026","mes":"Janeiro","ano":2026,"causa":"Salário Maternidade","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"83","cliente":"RODRIGO SILVA GONZAGA","data":"22/01/2026","mes":"Janeiro","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"84","cliente":"JANDERSON CARDOSO","data":"27/01/2026","mes":"Janeiro","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"85","cliente":"MANOEL CARLISSON SILVEIRA DE CARVALHO","data":"02/11/2026","mes":"Fevereiro","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"86","cliente":"JANAINA CRISTINA OLIVEIRA CARDOSO","data":"20/02/2026","mes":"Fevereiro","ano":2026,"causa":"Salário Maternidade","origem":"CAMIS","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"87","cliente":"ROSANGELA VELOSO DOS SANTOS","data":"24/02/2026","mes":"Fevereiro","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"88","cliente":"JADSON MENDES MENEZES","data":"21/02/2026","mes":"Fevereiro","ano":2026,"causa":"BPC","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"89","cliente":"ANDRESA CRISTINA DOS SANTOS RODRIGUES","data":"28/02/2026","mes":"Fevereiro","ano":2026,"causa":"Execução de Alimentos","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"90","cliente":"RIONETE VIANA BRITO","data":"27/02/2026","mes":"Fevereiro","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"91","cliente":"LEUDILENE SOBRAL DA SILVA","data":"02/04/2026","mes":"Fevereiro","ano":2026,"causa":"Salário Maternidade","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"92","cliente":"DARLENE PEREIRA DA ROCHA","data":"18/03/2026","mes":"Marco","ano":2026,"causa":"Trabalhista","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":"Repassado"},
+  {"id":"93","cliente":"JADSON MENDES MENEZES","data":"03/05/2026","mes":"Marco","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"94","cliente":"ANA CORREIRA DA SILVA","data":"03/09/2026","mes":"Marco","ano":2026,"causa":"Pensão por Morte","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"95","cliente":"SOLANGE COSTA PEREIRA","data":"03/09/2026","mes":"Marco","ano":2026,"causa":"Pensão por Morte","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"96","cliente":"FERNANDA PATRICIA DOS SANTOS","data":"03/01/2026","mes":"Marco","ano":2026,"causa":"Ação de Alimentos","origem":"Tráfego V4","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"97","cliente":"IVETE DOS SANTOS","data":"03/02/2026","mes":"Marco","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"98","cliente":"CLAUDENILSON COLARES NOBRE","data":"03/02/2026","mes":"Marco","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"99","cliente":"JOZAIAS LIMA DE QUEIROZ","data":"03/02/2026","mes":"Marco","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"100","cliente":"PAULO DE SOUSA FERREIRA","data":"03/04/2026","mes":"Marco","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"101","cliente":"RAFAEL FRANKLIM SALES BRANCHES","data":"03/04/2026","mes":"Marco","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"102","cliente":"PEDRO GABRIEL DOS SANTOS MOURÃO","data":"03/06/2026","mes":"Marco","ano":2026,"causa":"BPC","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"103","cliente":"MARLISSON LIMA SALDANHA","data":"03/06/2026","mes":"Marco","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"104","cliente":"JOAO CARLOS ALMEIDA","data":"03/09/2026","mes":"Marco","ano":2026,"causa":"BPC","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"105","cliente":"ELOILSON CARDOSO NASCIMENTO","data":"03/10/2026","mes":"Marco","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"106","cliente":"CLEIDIANE DA SILVA LAVOR","data":"17/03/2026","mes":"Marco","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"107","cliente":"GENILSON SOUSA DO ESPIRITO SANTO","data":"17/03/2026","mes":"Marco","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"108","cliente":"ORISVALDO DA SILVA LIMA","data":"23/03/2026","mes":"Marco","ano":2026,"causa":"APSI","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"109","cliente":"JOSILENE FERREIRA LOPES","data":"24/03/2026","mes":"Marco","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"110","cliente":"JOVANEIDE FERREIRA GUIMARAIS","data":"24/03/2026","mes":"Marco","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"111","cliente":"VANILSON FARIAS PEREIRA","data":"26/03/2026","mes":"Marco","ano":2026,"causa":"Consumidor","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"112","cliente":"MARIA APARECIDA CORREA MENDES","data":"30/03/2026","mes":"Marco","ano":2026,"causa":"Pensão por Morte","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"113","cliente":"KEROLEN COSTA DE SOUZA","data":"27/03/2026","mes":"Marco","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"114","cliente":"DENISMAR MARQUES DOS SANTOS","data":"27/03/2026","mes":"Marco","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"115","cliente":"FRANCIANE CAMPOS DOS SANTOS","data":"30/03/2026","mes":"Marco","ano":2026,"causa":"Auxílio Doença Rural","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"116","cliente":"LEUZILENE SOBRAL DA SILVA","data":"31/03/2026","mes":"Marco","ano":2026,"causa":"Salário Maternidade","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"117","cliente":"AGNES ESQUERDO DE SOUSA","data":"31/03/2026","mes":"Marco","ano":2026,"causa":"BPC","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"118","cliente":"MARIA DINAIR PEREIRA A SILVA","data":"04/02/2026","mes":"Abril","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"119","cliente":"RAYNNER CAUE DE JESUS FERREIRA","data":"04/08/2026","mes":"Abril","ano":2026,"causa":"BPC","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"120","cliente":"LETICIA FARIAS DOS SANTOS","data":"04/11/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego - Cartilha","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"121","cliente":"FRANCINELMA DE OLIVEIRA MOTA","data":"14/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"122","cliente":"ANTONIA COSTA CARDOSO","data":"20/04/2026","mes":"Abril","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"123","cliente":"MARIA DIRCE PROVIN","data":"23/04/2026","mes":"Abril","ano":2026,"causa":"Aposentadoria Rural","origem":"Indicação A","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"124","cliente":"AGNES ESQUERDO DE SOUSA","data":"16/04/2026","mes":"Abril","ano":2026,"causa":"Ação de Alimentos","origem":"Indicação B","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"125","cliente":"ROSINALDO AMORIM DOS SANTOS","data":"27/04/2026","mes":"Abril","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"126","cliente":"MARCIA MILAIANE GOMES DE MACEDO","data":"28/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Maternidade","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"127","cliente":"JOSE ERIVALDO RODRIGUES DA SILVA","data":"28/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"128","cliente":"REGINALDO IMBIRIBA DOS SANTOS","data":"28/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"TRÁFEGO- CARTILHA","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"129","cliente":"WLADEMIL DA SILVA DE SOUZA","data":"30/04/2026","mes":"Abril","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"130","cliente":"LUIS RENATO DE SOUSA GONZAGA","data":"30/04/2026","mes":"Abril","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"131","cliente":"MARCOS VINICIOS FALCÃO MOREIRA","data":"30/04/2026","mes":"Abril","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"132","cliente":"WANDERSON CORREIA FERREIRA","data":"05/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"133","cliente":"RUI GUILHERME DOS SANTOS MOURÃO","data":"05/08/2026","mes":"Maio","ano":2026,"causa":"Ação de Danos Materiais e Morais","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"134","cliente":"ADAILTON MOTA FERREIRA","data":"05/08/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"135","cliente":"MARIA JAIANE DUARTE DA SILVA","data":"05/09/2026","mes":"Maio","ano":2026,"causa":"Ação de Cobrança","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"136","cliente":"MARIA DE FÁTIMA RIBEIRO","data":"05/09/2026","mes":"Maio","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"137","cliente":"DELCIVANE VIEIRA AZULAY","data":"05/11/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Rural","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"138","cliente":"MARCOS AGUIAR ROCHA","data":"05/12/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"139","cliente":"ROSANA GONZAGA DE OLIVEIRA","data":"13/05/2026","mes":"Maio","ano":2026,"causa":"BPC","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"140","cliente":"EDINEIDE LOPES DA SILVA","data":"14/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"141","cliente":"ROMISSON SILVA DOS SANTOS","data":"14/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"142","cliente":"SARA DE JESUS MORARES","data":"15/05/2026","mes":"Maio","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"143","cliente":"OSVALDO NASCIMENTO VAZ","data":"15/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"144","cliente":"OSVALDO NASCIMENTO VAZ","data":"15/05/2026","mes":"Maio","ano":2026,"causa":"Aposentadoria por Invalidez","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"145","cliente":"ANDRESSA CAROLINE COSTA MOURA","data":"18/05/2026","mes":"Maio","ano":2026,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"146","cliente":"JOSIAS DUARTE MARTINS","data":"18/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"147","cliente":"ANTONIO COSTA","data":"18/07/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"148","cliente":"ADEMAR PEREIRA DE MORAES","data":"19/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"149","cliente":"JOSE DA SILVA RIKER","data":"20/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"150","cliente":"NILTON CÉSAR FERREIRA LIMA","data":"20/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"151","cliente":"ADRIA VANESSA CARDOSO SOUSA","data":"22/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"152","cliente":"IRANILSON MOTTA DA SILVA","data":"25/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"153","cliente":"RAIMUNDO DE SOUZA PINTO","data":"25/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"154","cliente":"MIRIAN DE OLIVEIRA VINHOTE","data":"30/06/2026","mes":"Maio","ano":2026,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"155","cliente":"ROSANA MARIA CUNHA BRAGA","data":"06/08/2026","mes":"Maio","ano":2026,"causa":"BPC","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"156","cliente":"VERONICE APARECIDA VARGES BATISTA","data":"27/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"157","cliente":"MARTA TORRES DE SOUSA","data":"27/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"158","cliente":"DIOCELIO MOTA","data":"28/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"159","cliente":"ELANE PATRICIA DE PAULA CARDOSO","data":"28/05/2026","mes":"Maio","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"160","cliente":"JURUCEI ARAUJO COSTA","data":"28/05/2026","mes":"Maio","ano":2026,"causa":"BPC","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"161","cliente":"MARCIO MARINHO FARIAS","data":"28/05/2026","mes":"Maio","ano":2026,"causa":"Ação de Cobrança","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"162","cliente":"LEANE COSTA RODRIGUES","data":"28/05/2026","mes":"Maio","ano":2026,"causa":"Salário Maternidade","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"163","cliente":"RAIANA CARVALHO SILVA MAGNO","data":"29/05/2026","mes":"Maio","ano":2026,"causa":"Salário Maternidade","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"164","cliente":"RONILSA MARIA BRAGA PEREIRA","data":"30/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"165","cliente":"MARISTELA GOMES DA SILVA","data":"30/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"166","cliente":"FERNANDA PEIXOTO DE MELO","data":"30/05/2026","mes":"Maio","ano":2026,"causa":"BPC","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"167","cliente":"WARLEN ROBERTO SILVA CARDOSO","data":"29/05/2026","mes":"Maio","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"168","cliente":"RUBENS SANTOS ROCHA","data":"06/03/2026","mes":"Junho","ano":2026,"causa":"Aposentadoria por Idade Rural","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"169","cliente":"FRANCISCO CHERMERSON DANTAS DE SOUSA","data":"06/03/2026","mes":"Junho","ano":2026,"causa":"Aposentadoria por Invalidez","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"170","cliente":"FRANCIANE FERREIRA MENEZES","data":"17/06/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"171","cliente":"GEORGELLE PESSOA CUNHA DA SILVA","data":"06/06/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"172","cliente":"MARIA ALMIRA DE QUEIROZ","data":"06/12/2026","mes":"Junho","ano":2026,"causa":"APTC","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"173","cliente":"VALDECI COSTA MESQUITA","data":"16/06/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"174","cliente":"LUCIETE SOUSA DA SILVA","data":"06/10/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"175","cliente":"LUCIETE SOUSA DA SILVA","data":"06/10/2026","mes":"Junho","ano":2026,"causa":"APSI","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"176","cliente":"LEONARDO JOSE DOS SANTOS BRANDÃO","data":"06/11/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"177","cliente":"ELIENE PEREIRA DA SILVA","data":"06/12/2026","mes":"Junho","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"178","cliente":"JARLISSON MACEDO A SILVA","data":"06/12/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"179","cliente":"RAIANE ALVES DOS SANTOS","data":"19/06/2026","mes":"Junho","ano":2026,"causa":"SALÁRIO MATERNIDADE URBANO","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"180","cliente":"MADSON MACIEL","data":"21/06/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"181","cliente":"RANIELE FERNANDES TAVARES","data":"21/06/2026","mes":"Junho","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"182","cliente":"VALDEMAR DA SILVA IMBIRIBA","data":"26/06/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença Urbano","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"183","cliente":"GAEL VINICIUS CALDEIRA DE CARVALHO","data":"28/06/2026","mes":"Junho","ano":2026,"causa":"Pensão Alimentícia","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"184","cliente":"ELUAN GUILHERME SILVA DOS SANTOS","data":"28/06/2026","mes":"Junho","ano":2026,"causa":"Pensão Alimentícia","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"185","cliente":"SOLANGE COSTA PEREIRA","data":"15/06/2026","mes":"Junho","ano":2026,"causa":"Ação de Cobrança","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"186","cliente":"HERITANIA ALBARADO BARBOSA","data":"16/06/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"187","cliente":"ROSIANE PEREIRA MOTA","data":"18/06/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"188","cliente":"MARIVANIA CORREA MENDES REBELO","data":"19/06/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"189","cliente":"JOSÉ ERALDO DE SOUSA FERREIRA","data":"23/06/2026","mes":"Junho","ano":2026,"causa":"Consumidor","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"190","cliente":"JOSE OTAVIO SOUSA DE ALMEIDA","data":"23/06/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"191","cliente":"ELINALDO RODRIGUES MARINHO","data":"23/06/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Escritório","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"192","cliente":"RAIANE AZULAY GOMES","data":"26/06/2026","mes":"Junho","ano":2026,"causa":"SALÁRIO MATERNIDADE RURAL","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"193","cliente":"JUVENILSON DE SOUZA NUNES","data":"27/06/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"194","cliente":"RECUPERAR","data":"","mes":"Junho","ano":2026,"causa":"","origem":"","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"195","cliente":"FRANCINALDO DOS ANJOS FEITOSA","data":"28/02/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"196","cliente":"ANGELICA LEAL DE SOUSA ARAUJO","data":"29/01/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"197","cliente":"BIANCA COELHO LIMA","data":"03/02/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"198","cliente":"ROSINARA ROCHA SILVA","data":"02/09/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"199","cliente":"EDWILSON BATISTA FROTA","data":"27/02/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"200","cliente":"NADJAIME DOS SANTOS VIEIRA","data":"27/02/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"201","cliente":"DANIEL DOS SANTOS OLIVEIRA","data":"19/02/2026","mes":"Junho","ano":2026,"causa":"Auxílio Doença","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"202","cliente":"FRANCINALDO LIRA FERREIRA","data":"30/03/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Indicação","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""},
+  {"id":"203","cliente":"ADRIANO CARVALHO DE SOUSA","data":"30/03/2026","mes":"Junho","ano":2026,"causa":"Planejamento Previdenciário","origem":"Tráfego","status":"Em Andamento","honorarios":0,"valor_esperado":0,"valor_recebido":0,"observacao":""}
+];
+
+// ═══════════════════════════════════════════════
+// DEFAULTS de referência
+// ═══════════════════════════════════════════════
+const DEFAULT_CAUSAS = [
+  'Planejamento Previdenciário','Auxílio Doença','Auxílio Doença Rural','Auxílio Doença Urbano',
+  'Salário Maternidade','Salário Maternidade Rural','Salário Maternidade Urbano',
+  'Seguro Defeso','BPC','Pensão por Morte','Pensão Alimentícia','Trabalhista',
+  'Execução de Alimentos','Ação de Alimentos','Ação de Cobrança','Auxílio Acidente',
+  'Auxílio Maternidade','Aposentadoria por Invalidez','Aposentadoria por Idade Rural',
+  'Aposentadoria Rural','APSI','APTC','Consumidor','Outros'
+];
+const DEFAULT_ORIGENS = ['Tráfego','Tráfego V4','Tráfego - Cartilha','Indicação','Indicação A','Indicação B','CAMIS','BIA','Escritório','Pro Bono','RUI'];
+const DEFAULT_STATUS  = ['Em Andamento','Ganho','Perdido','Aguardando Decisão'];
+
+// ═══════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════
+const STORAGE = {
+  get(k, def=null) {
+    try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : def; } catch(e){ return def; }
+  },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} },
+
+  getContratos()   { return STORAGE.get('ac_contratos', null); },
+  setContratos(v)  { STORAGE.set('ac_contratos', v); },
+
+  getCausas()      { return STORAGE.get('ac_causas',  DEFAULT_CAUSAS); },
+  getOrigens()     { return STORAGE.get('ac_origens', DEFAULT_ORIGENS); },
+  getStatusList()  { return STORAGE.get('ac_status_lista', DEFAULT_STATUS); },
+  setCausas(v)     { STORAGE.set('ac_causas', v); },
+  setOrigens(v)    { STORAGE.set('ac_origens', v); },
+  setStatusList(v) { STORAGE.set('ac_status_lista', v); },
+
+  getConfig() {
+    return STORAGE.get('ac_config', {
+      usuario:'araujo.costa',
+      senha:'advocacia2026',
+      tema:'advocacia',
+      modelo:'claude-sonnet-4-6',
+      api_key:''
+    });
+  },
+  setConfig(v) { STORAGE.set('ac_config', v); },
+
+  init() {
+    if (STORAGE.getContratos() === null) {
+      const com_ids = DADOS_INICIAIS.map(c => ({...c, id: UTILS.uuid()}));
+      STORAGE.setContratos(com_ids);
+    }
+    const cfg = STORAGE.getConfig();
+    document.documentElement.setAttribute('data-tema', cfg.tema || 'advocacia');
+    const nomes = {advocacia:'Advocacia',dark:'Dark',light:'Light',neon:'Neon'};
+    const badge = document.getElementById('tema-badge');
+    if(badge) badge.textContent = nomes[cfg.tema] || 'Advocacia';
+  }
+};
+
+// ═══════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════
+const AUTH = {
+  login() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value;
+    const cfg  = STORAGE.getConfig();
+    const errEl = document.getElementById('login-error');
+    if (user === cfg.usuario && pass === cfg.senha) {
+      sessionStorage.setItem('ac_session', '1');
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      STORAGE.init();
+      NAV.ir('dashboard');
+    } else {
+      if(errEl) errEl.textContent = 'Usuário ou senha incorretos.';
+    }
+  },
+  logout() {
+    sessionStorage.removeItem('ac_session');
+    document.getElementById('app').classList.remove('visible');
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+    const errEl = document.getElementById('login-error');
+    if(errEl) errEl.textContent = '';
+  },
+  check() {
+    if (sessionStorage.getItem('ac_session') === '1') {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+      STORAGE.init();
+      NAV.ir('dashboard');
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+const NAV = {
+  atual: null,
+  titulos: {
+    dashboard:'Dashboard', clientes:'Clientes', relatorios:'Relatórios',
+    ia:'Agente de IA', config:'Configurações'
+  },
+  ir(secao) {
+    NAV.atual = secao;
+    document.querySelectorAll('.nav-item').forEach(b => {
+      b.classList.toggle('active', b.dataset.section === secao);
+    });
+    document.getElementById('header-title').textContent = NAV.titulos[secao] || secao;
+    const renders = {
+      dashboard: RENDER.dashboard,
+      clientes:  RENDER.clientes,
+      relatorios:RENDER.relatorios,
+      ia:        RENDER.ia,
+      config:    RENDER.config
+    };
+    if (renders[secao]) renders[secao]();
+  }
+};
+
+// ═══════════════════════════════════════════════
+// CHART — Canvas API
+// ═══════════════════════════════════════════════
+const CHART = {
+  cores: ['#C4962A','#3b82f6','#22c55e','#ef4444','#f59e0b','#8b5cf6','#06b6d4','#ec4899'],
+
+  _style() {
+    const s = getComputedStyle(document.documentElement);
+    return {
+      border: s.getPropertyValue('--border').trim() || 'rgba(255,255,255,.1)',
+      muted:  s.getPropertyValue('--muted').trim()  || '#888',
+      text:   s.getPropertyValue('--text').trim()   || '#F7F4EE',
+      bg2:    s.getPropertyValue('--bg2').trim()     || '#0D1210',
+      accent: s.getPropertyValue('--accent').trim()  || '#C4962A'
+    };
+  },
+
+  barras(canvasId, labels, dados, cor) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width = canvas.offsetWidth || 400;
+    const H = canvas.height = 200;
+    ctx.clearRect(0,0,W,H);
+    const st = CHART._style();
+    cor = cor || st.accent;
+    const max = Math.max(...dados, 1);
+    const pad = {l:36,r:10,t:14,b:38};
+    const areaW = W - pad.l - pad.r;
+    const areaH = H - pad.t - pad.b;
+    const gap  = areaW / Math.max(labels.length,1);
+    const barW = Math.max(6, gap * 0.55);
+    // gridlines
+    ctx.strokeStyle = st.border; ctx.lineWidth = 1;
+    for (let i=0; i<=4; i++) {
+      const y = pad.t + areaH * (1 - i/4);
+      ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+      ctx.fillStyle = st.muted; ctx.font = '9px Montserrat,sans-serif'; ctx.textAlign='right';
+      ctx.fillText(Math.round(max*i/4), pad.l-4, y+3);
+    }
+    dados.forEach((v,i) => {
+      const x = pad.l + gap*i + gap/2 - barW/2;
+      const h = Math.max((v/max)*areaH, v>0?2:0);
+      const y = pad.t + areaH - h;
+      ctx.fillStyle = cor;
+      if(ctx.roundRect) ctx.roundRect(x,y,barW,h,3); else ctx.rect(x,y,barW,h);
+      ctx.fill();
+      ctx.fillStyle = st.muted; ctx.font = '9px Montserrat,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(labels[i].slice(0,3), pad.l + gap*i + gap/2, H-pad.b+13);
+      if(v>0){ctx.fillStyle=cor;ctx.font='bold 9px Montserrat,sans-serif';ctx.fillText(v,pad.l+gap*i+gap/2,y-3);}
+    });
+  },
+
+  donut(canvasId, labels, dados) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const SIZE = 150;
+    canvas.width = SIZE; canvas.height = SIZE;
+    ctx.clearRect(0,0,SIZE,SIZE);
+    const total = dados.reduce((a,b)=>a+b,0);
+    if (!total) return;
+    const st = CHART._style();
+    let ang = -Math.PI/2;
+    dados.forEach((v,i) => {
+      const slice = (v/total)*2*Math.PI;
+      ctx.beginPath(); ctx.moveTo(SIZE/2,SIZE/2);
+      ctx.arc(SIZE/2,SIZE/2,SIZE/2-4,ang,ang+slice); ctx.closePath();
+      ctx.fillStyle = CHART.cores[i%CHART.cores.length]; ctx.fill();
+      ang += slice;
+    });
+    ctx.beginPath(); ctx.arc(SIZE/2,SIZE/2,SIZE/2-28,0,2*Math.PI);
+    ctx.fillStyle = st.bg2; ctx.fill();
+    ctx.fillStyle = st.text; ctx.font='bold 16px Montserrat,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(total, SIZE/2, SIZE/2);
+  },
+
+  barrasH(canvasId, labels, dados) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width = canvas.offsetWidth || 400;
+    const rowH = 34;
+    const H = canvas.height = labels.length * rowH + 16;
+    ctx.clearRect(0,0,W,H);
+    const max = Math.max(...dados,1);
+    const st = CHART._style();
+    const padL = Math.min(160, W*0.38);
+    labels.forEach((lbl,i) => {
+      const y = 8 + i*rowH;
+      const barW = ((dados[i]||0)/max)*(W-padL-50);
+      ctx.fillStyle = st.muted; ctx.font='11px Montserrat,sans-serif'; ctx.textAlign='right';
+      ctx.fillText(lbl.slice(0,22), padL-8, y+17);
+      ctx.fillStyle = CHART.cores[i%CHART.cores.length];
+      if(ctx.roundRect) ctx.roundRect(padL,y+4,Math.max(barW,2),22,3); else ctx.rect(padL,y+4,Math.max(barW,2),22);
+      ctx.fill();
+      ctx.fillStyle = st.text; ctx.font='bold 10px Montserrat,sans-serif'; ctx.textAlign='left';
+      ctx.fillText(dados[i], padL+barW+6, y+18);
+    });
+  }
+};
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+const RENDER = {
+  dashboard() {
+    const c = STORAGE.getContratos() || [];
+    const total = c.length;
+    const ganhos    = c.filter(x=>x.status==='Ganho').length;
+    const andamento = c.filter(x=>x.status==='Em Andamento').length;
+    const perdidos  = c.filter(x=>x.status==='Perdido').length;
+    const taxaSucesso = (ganhos+perdidos)>0 ? Math.round((ganhos/(ganhos+perdidos))*100) : 0;
+    const totalHon = c.reduce((s,x)=>s+(parseFloat(x.honorarios)||0),0);
+    const totalRec = c.reduce((s,x)=>s+(parseFloat(x.valor_recebido)||0),0);
+    const totalEsp = c.reduce((s,x)=>s+(parseFloat(x.valor_esperado)||0),0);
+    const aReceber = Math.max(0, totalEsp-totalRec);
+    const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const porMes = MESES.map(m=>c.filter(x=>x.mes===m).length);
+    const causaCount={};
+    c.forEach(x=>{if(x.causa)causaCount[x.causa]=(causaCount[x.causa]||0)+1;});
+    const causaTop = Object.entries(causaCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const outrosCausa = total - causaTop.reduce((s,[,v])=>s+v,0);
+    const causaLabels=[...causaTop.map(([k])=>k),...(outrosCausa>0?['Outros']:[])];
+    const causaDados=[...causaTop.map(([,v])=>v),...(outrosCausa>0?[outrosCausa]:[])];
+    const origCount={};
+    c.forEach(x=>{if(x.origem)origCount[x.origem]=(origCount[x.origem]||0)+1;});
+    const origEntries=Object.entries(origCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+    document.getElementById('content').innerHTML = `
+      <div class="card-grid grid-4 mb-4">
+        <div class="card">
+          <div class="card-label">Total de Contratos</div>
+          <div class="card-value">${total}</div>
+          <div class="card-sub">2025 + 2026</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Contratos Ganhos</div>
+          <div class="card-value t-green">${ganhos}</div>
+          <div class="card-sub">${Math.round((ganhos/Math.max(total,1))*100)}% do total</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Em Andamento</div>
+          <div class="card-value" style="color:var(--accent)">${andamento}</div>
+          <div class="card-sub">${Math.round((andamento/Math.max(total,1))*100)}% do total</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Taxa de Sucesso</div>
+          <div class="card-value">${taxaSucesso}%</div>
+          <div class="card-sub">${ganhos} ganhos / ${perdidos} perdidos</div>
+        </div>
+      </div>
+      <div class="card-grid grid-3 mb-4">
+        <div class="card">
+          <div class="card-label">Total de Honorários</div>
+          <div class="card-value" style="font-size:1.3rem">${UTILS.fmtMoeda(totalHon)}</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Total Recebido</div>
+          <div class="card-value t-green" style="font-size:1.3rem">${UTILS.fmtMoeda(totalRec)}</div>
+        </div>
+        <div class="card">
+          <div class="card-label">A Receber</div>
+          <div class="card-value t-gold" style="font-size:1.3rem">${UTILS.fmtMoeda(aReceber)}</div>
+        </div>
+      </div>
+      <div class="card-grid grid-2 mb-4">
+        <div class="card">
+          <div class="card-label" style="margin-bottom:14px">Contratos por Mês</div>
+          <div class="chart-wrap"><canvas id="chart-mes"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="margin-bottom:14px">Distribuição por Origem</div>
+          <div class="chart-wrap"><canvas id="chart-origem"></canvas></div>
+        </div>
+      </div>
+      <div class="card-grid grid-2 mb-4">
+        <div class="card">
+          <div class="card-label" style="margin-bottom:14px">Top Causas</div>
+          <div style="display:flex;align-items:flex-start;gap:20px">
+            <canvas id="chart-causa" style="width:150px;height:150px;flex-shrink:0"></canvas>
+            <div style="flex:1;padding-top:4px">
+              ${causaLabels.map((l,i)=>`
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+                  <span style="width:10px;height:10px;border-radius:50%;background:${CHART.cores[i%CHART.cores.length]};flex-shrink:0"></span>
+                  <span style="font-size:.73rem;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${UTILS.escapeHtml(l)}</span>
+                  <span style="font-size:.8rem;font-weight:700;color:var(--text)">${causaDados[i]}</span>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="margin-bottom:12px">🤖 Agente de IA</div>
+          <div style="color:var(--muted);font-size:.82rem;line-height:1.6">
+            Acesse <strong style="color:var(--text)">Agente de IA</strong> no menu lateral para gerar insights automáticos sobre os contratos com Claude.
+          </div>
+        </div>
+      </div>
+    `;
+    requestAnimationFrame(()=>{
+      CHART.barras('chart-mes', MESES.map(m=>m.slice(0,3)), porMes);
+      CHART.donut('chart-causa', causaLabels, causaDados);
+      CHART.barrasH('chart-origem', origEntries.map(([k])=>k), origEntries.map(([,v])=>v));
+    });
+  },
+
+  clientes()   { RENDER._clientes(); },
+  relatorios() { RENDER._relatorios(); },
+  ia()         { RENDER._ia(); },
+  config()     { RENDER._config(); },
+
+  _clientes() {
+    const contratos   = STORAGE.getContratos() || [];
+    const causas      = STORAGE.getCausas();
+    const origens     = STORAGE.getOrigens();
+    const statusList  = STORAGE.getStatusList();
+    const MESES_LIST  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+    document.getElementById('content').innerHTML = `
+      <div class="section-header">
+        <div>
+          <div class="section-title">Clientes</div>
+          <div class="section-sub">${contratos.length} contratos cadastrados</div>
+        </div>
+        <button class="btn btn-primary" onclick="CRUD.abrirNovo()">+ Novo Contrato</button>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="f-busca" placeholder="🔍 Buscar cliente..." oninput="RENDER._tabela()" style="min-width:200px">
+        <select id="f-mes" onchange="RENDER._tabela()">
+          <option value="">Todos os meses</option>
+          ${MESES_LIST.map(m=>`<option>${m}</option>`).join('')}
+        </select>
+        <select id="f-ano" onchange="RENDER._tabela()">
+          <option value="">Todos os anos</option>
+          <option>2025</option><option>2026</option>
+        </select>
+        <select id="f-causa" onchange="RENDER._tabela()">
+          <option value="">Todas as causas</option>
+          ${causas.map(c=>`<option>${UTILS.escapeHtml(c)}</option>`).join('')}
+        </select>
+        <select id="f-origem" onchange="RENDER._tabela()">
+          <option value="">Todas as origens</option>
+          ${origens.map(o=>`<option>${UTILS.escapeHtml(o)}</option>`).join('')}
+        </select>
+        <select id="f-status" onchange="RENDER._tabela()">
+          <option value="">Todos os status</option>
+          ${statusList.map(s=>`<option>${UTILS.escapeHtml(s)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="CRUD.ordenar('cliente')">Cliente ↕</th>
+                <th onclick="CRUD.ordenar('data')">Data ↕</th>
+                <th onclick="CRUD.ordenar('causa')">Causa ↕</th>
+                <th onclick="CRUD.ordenar('origem')">Origem ↕</th>
+                <th onclick="CRUD.ordenar('status')">Status ↕</th>
+                <th onclick="CRUD.ordenar('honorarios')" style="text-align:right">Honorários ↕</th>
+                <th onclick="CRUD.ordenar('valor_recebido')" style="text-align:right">Recebido ↕</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-contratos"></tbody>
+          </table>
+        </div>
+        <div id="tabela-info" style="padding:10px 14px;font-size:.73rem;color:var(--muted);border-top:1px solid var(--border)"></div>
+      </div>
+    `;
+    RENDER._tabela();
+  },
+
+  _tabela() {
+    const contratos = STORAGE.getContratos() || [];
+    const busca  = (document.getElementById('f-busca')?.value||'').toLowerCase();
+    const mes    = document.getElementById('f-mes')?.value||'';
+    const ano    = document.getElementById('f-ano')?.value||'';
+    const causa  = document.getElementById('f-causa')?.value||'';
+    const origem = document.getElementById('f-origem')?.value||'';
+    const status = document.getElementById('f-status')?.value||'';
+
+    let filtrados = contratos.filter(c => {
+      if (busca  && !String(c.cliente||'').toLowerCase().includes(busca)) return false;
+      if (mes    && c.mes !== mes) return false;
+      if (ano    && String(c.ano) !== ano) return false;
+      if (causa  && c.causa !== causa) return false;
+      if (origem && c.origem !== origem) return false;
+      if (status && c.status !== status) return false;
+      return true;
+    });
+
+    const ord = CRUD._ord || {campo:'id',asc:false};
+    filtrados.sort((a,b) => {
+      let va=a[ord.campo]??'', vb=b[ord.campo]??'';
+      if(typeof va==='number') return ord.asc?va-vb:vb-va;
+      return ord.asc ? String(va).localeCompare(String(vb),'pt-BR') : String(vb).localeCompare(String(va),'pt-BR');
+    });
+
+    const tbody = document.getElementById('tbody-contratos');
+    if(!tbody) return;
+    tbody.innerHTML = filtrados.length ? filtrados.map(c=>`
+      <tr>
+        <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${UTILS.escapeHtml(c.cliente)}">${UTILS.escapeHtml(c.cliente)}</td>
+        <td style="white-space:nowrap">${UTILS.escapeHtml(c.data||'')}</td>
+        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${UTILS.escapeHtml(c.causa||'')}">${UTILS.escapeHtml(c.causa||'')}</td>
+        <td style="white-space:nowrap">${UTILS.escapeHtml(c.origem||'')}</td>
+        <td>${UTILS.badgeStatus(c.status)}</td>
+        <td style="text-align:right;white-space:nowrap">${UTILS.fmtMoeda(c.honorarios)}</td>
+        <td style="text-align:right;white-space:nowrap">${UTILS.fmtMoeda(c.valor_recebido)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm btn-secondary" onclick="CRUD.editar('${c.id}')" title="Editar">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="CRUD.confirmarExcluir('${c.id}')" title="Excluir">🗑️</button>
+        </td>
+      </tr>`).join('')
+    : `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">Nenhum contrato encontrado com os filtros selecionados.</td></tr>`;
+
+    const info = document.getElementById('tabela-info');
+    if(info) info.textContent = `Exibindo ${filtrados.length} de ${contratos.length} contratos`;
+  },
+
+  // Placeholders for remaining sections (Tasks 5-7)
+  _relatorios() { document.getElementById('content').innerHTML = '<div class="empty-state">Relatórios em breve...</div>'; },
+  _ia()         { document.getElementById('content').innerHTML = '<div class="empty-state">Agente de IA em breve...</div>'; },
+  _config()     { document.getElementById('content').innerHTML = '<div class="empty-state">Configurações em breve...</div>'; }
+};
+
+// ═══════════════════════════════════════════════
+// CRUD
+// ═══════════════════════════════════════════════
+const CRUD = {
+  _ord: {campo:'id', asc:false},
+
+  ordenar(campo) {
+    CRUD._ord = CRUD._ord.campo===campo ? {campo,asc:!CRUD._ord.asc} : {campo,asc:true};
+    RENDER._tabela();
+  },
+
+  _popularSelects(c) {
+    const causas  = STORAGE.getCausas();
+    const origens = STORAGE.getOrigens();
+    const statusL = STORAGE.getStatusList();
+    const sel = (id, arr, val) => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.innerHTML = arr.map(v=>`<option value="${UTILS.escapeHtml(v)}"${v===val?' selected':''}>${UTILS.escapeHtml(v)}</option>`).join('');
+    };
+    sel('form-causa',  causas,  c?.causa  || causas[0]);
+    sel('form-origem', origens, c?.origem || origens[0]);
+    sel('form-status', statusL, c?.status || 'Em Andamento');
+  },
+
+  abrirNovo() {
+    document.getElementById('modal-titulo').textContent = 'Novo Contrato';
+    document.getElementById('form-id').value = '';
+    ['form-cliente','form-data','form-honorarios','form-esperado','form-recebido','form-obs']
+      .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    CRUD._popularSelects(null);
+    document.getElementById('modal-contrato').classList.add('open');
+    setTimeout(()=>document.getElementById('form-cliente')?.focus(), 50);
+  },
+
+  editar(id) {
+    const c = (STORAGE.getContratos()||[]).find(x=>x.id===id);
+    if(!c) return;
+    document.getElementById('modal-titulo').textContent = 'Editar Contrato';
+    document.getElementById('form-id').value       = c.id;
+    document.getElementById('form-cliente').value  = c.cliente || '';
+    document.getElementById('form-data').value     = c.data    || '';
+    document.getElementById('form-honorarios').value = c.honorarios || 0;
+    document.getElementById('form-esperado').value   = c.valor_esperado || 0;
+    document.getElementById('form-recebido').value   = c.valor_recebido || 0;
+    document.getElementById('form-obs').value        = c.observacao || '';
+    CRUD._popularSelects(c);
+    document.getElementById('modal-contrato').classList.add('open');
+  },
+
+  fecharModal() {
+    document.getElementById('modal-contrato').classList.remove('open');
+  },
+
+  salvar() {
+    const id      = document.getElementById('form-id').value;
+    const cliente = document.getElementById('form-cliente').value.trim();
+    if(!cliente) { alert('Informe o nome do cliente.'); return; }
+    const dataStr = document.getElementById('form-data').value.trim();
+    const causa   = document.getElementById('form-causa').value;
+    const origem  = document.getElementById('form-origem').value;
+    const status  = document.getElementById('form-status').value;
+    const honorarios     = parseFloat(document.getElementById('form-honorarios').value)||0;
+    const valor_esperado = parseFloat(document.getElementById('form-esperado').value)||0;
+    const valor_recebido = parseFloat(document.getElementById('form-recebido').value)||0;
+    const observacao     = document.getElementById('form-obs').value.trim();
+
+    const MESES_ARR = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const partes = dataStr.split('/');
+    const mes = partes.length>=2 ? (MESES_ARR[parseInt(partes[1])||0]||'') : '';
+    const ano = partes.length>=3 ? (parseInt(partes[2])||new Date().getFullYear()) : new Date().getFullYear();
+
+    let contratos = STORAGE.getContratos()||[];
+    if(id) {
+      const idx = contratos.findIndex(c=>c.id===id);
+      if(idx>=0) contratos[idx]={...contratos[idx], cliente, data:dataStr, mes, ano, causa, origem, status, honorarios, valor_esperado, valor_recebido, observacao};
+    } else {
+      contratos.unshift({id:UTILS.uuid(), cliente, data:dataStr, mes, ano, causa, origem, status, honorarios, valor_esperado, valor_recebido, observacao});
+    }
+    STORAGE.setContratos(contratos);
+    CRUD.fecharModal();
+    RENDER._clientes();
+  },
+
+  confirmarExcluir(id) {
+    document.getElementById('modal-confirm').classList.add('open');
+    document.getElementById('btn-confirm-del').onclick = () => {
+      STORAGE.setContratos((STORAGE.getContratos()||[]).filter(c=>c.id!==id));
+      document.getElementById('modal-confirm').classList.remove('open');
+      RENDER._clientes();
+    };
+  }
+};
+
+// ═══════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════
+window.addEventListener('load', () => AUTH.check());
 </script>
 </body>
 </html>
