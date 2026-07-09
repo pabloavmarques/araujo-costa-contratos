@@ -1140,6 +1140,10 @@ const UTILS = {
   },
   escapeHtml(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  },
+  async sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
   }
 };
 
@@ -1388,7 +1392,7 @@ const STORAGE = {
   getConfig() {
     return STORAGE.get('ac_config', {
       usuario:'araujo.costa',
-      senha:'advocacia2026',
+      senha:'Adv@01jus',
       tema:'advocacia',
       modelo:'claude-sonnet-4-6',
       api_key:''
@@ -1435,21 +1439,76 @@ const STORAGE = {
 // AUTH
 // ═══════════════════════════════════════════════
 const AUTH = {
-  login() {
-    const user = document.getElementById('login-user').value.trim();
-    const pass = document.getElementById('login-pass').value;
-    const cfg  = STORAGE.getConfig();
-    const errEl = document.getElementById('login-error');
-    if (user === cfg.usuario && pass === cfg.senha) {
-      sessionStorage.setItem('ac_session', '1');
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').classList.add('visible');
-      STORAGE.init();
-      NAV.ir('dashboard');
-    } else {
-      if(errEl) errEl.textContent = 'Usuário ou senha incorretos.';
+  _MAX_TENTATIVAS: 5,
+  _BLOQUEIO_MS: 15 * 60 * 1000, // 15 minutos
+
+  _getLockout() {
+    try { return JSON.parse(localStorage.getItem('ac_lockout')||'{}'); } catch(e) { return {}; }
+  },
+  _setLockout(v) { localStorage.setItem('ac_lockout', JSON.stringify(v)); },
+  _bloqueado() {
+    const l = AUTH._getLockout();
+    if (l.lockUntil && Date.now() < l.lockUntil) return l.lockUntil;
+    return false;
+  },
+  _registrarFalha() {
+    const l = AUTH._getLockout();
+    const tentativas = (l.tentativas || 0) + 1;
+    const lockUntil  = tentativas >= AUTH._MAX_TENTATIVAS ? Date.now() + AUTH._BLOQUEIO_MS : (l.lockUntil || 0);
+    AUTH._setLockout({ tentativas, lockUntil });
+    return tentativas;
+  },
+  _resetLockout() { localStorage.removeItem('ac_lockout'); },
+
+  async _migrarSenha() {
+    const cfg = STORAGE.getConfig();
+    if (cfg.senha && !cfg.senha_hash) {
+      cfg.senha_hash = await UTILS.sha256(cfg.senha);
+      delete cfg.senha;
+      STORAGE.setConfig(cfg);
     }
   },
+
+  async login() {
+    const user  = document.getElementById('login-user').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    const errEl = document.getElementById('login-error');
+    const btn   = document.querySelector('.login-btn');
+
+    // Verificar bloqueio
+    const bloqueadoAte = AUTH._bloqueado();
+    if (bloqueadoAte) {
+      const min = Math.ceil((bloqueadoAte - Date.now()) / 60000);
+      if(errEl) errEl.textContent = `Muitas tentativas. Aguarde ${min} minuto(s).`;
+      return;
+    }
+
+    if(btn) btn.disabled = true;
+    try {
+      const cfg      = STORAGE.getConfig();
+      const hashInput = await UTILS.sha256(pass);
+
+      if (user === cfg.usuario && hashInput === cfg.senha_hash) {
+        AUTH._resetLockout();
+        sessionStorage.setItem('ac_session', '1');
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').classList.add('visible');
+        STORAGE.init();
+        NAV.ir('dashboard');
+      } else {
+        const tentativas = AUTH._registrarFalha();
+        const restantes  = AUTH._MAX_TENTATIVAS - tentativas;
+        if (restantes <= 0) {
+          if(errEl) errEl.textContent = 'Conta bloqueada por 15 minutos após muitas tentativas incorretas.';
+        } else {
+          if(errEl) errEl.textContent = `Usuário ou senha incorretos. ${restantes} tentativa(s) restante(s).`;
+        }
+      }
+    } finally {
+      if(btn) btn.disabled = false;
+    }
+  },
+
   logout() {
     sessionStorage.removeItem('ac_session');
     document.getElementById('app').classList.remove('visible');
@@ -1459,6 +1518,7 @@ const AUTH = {
     const errEl = document.getElementById('login-error');
     if(errEl) errEl.textContent = '';
   },
+
   check() {
     if (sessionStorage.getItem('ac_session') === '1') {
       document.getElementById('login-screen').style.display = 'none';
@@ -2199,13 +2259,16 @@ const CRUD = {
 // CONFIG
 // ═══════════════════════════════════════════════
 const CONFIG = {
-  salvarAcesso() {
+  async salvarAcesso() {
     const cfg = STORAGE.getConfig();
     const novoUser  = document.getElementById('cfg-usuario')?.value.trim();
     const novaSenha = document.getElementById('cfg-senha')?.value;
     if (!novoUser) { alert('Usuário não pode ser vazio.'); return; }
     cfg.usuario = novoUser;
-    if(novaSenha) cfg.senha = novaSenha;
+    if (novaSenha) {
+      cfg.senha_hash = await UTILS.sha256(novaSenha);
+      delete cfg.senha;
+    }
     STORAGE.setConfig(cfg);
     alert('Acesso atualizado! Use as novas credenciais no próximo login.');
   },
@@ -2471,7 +2534,10 @@ Foque em: oportunidades de melhoria, riscos financeiros, padrões de captação,
 // ═══════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════
-window.addEventListener('load', () => AUTH.check());
+window.addEventListener('load', async () => {
+  await AUTH._migrarSenha();
+  AUTH.check();
+});
 </script>
 </body>
 </html>
