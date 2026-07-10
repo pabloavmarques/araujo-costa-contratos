@@ -1417,7 +1417,14 @@ const CHART = {
     };
   },
 
-  barras(canvasId, labels, dados, cor) {
+  _fmtLabel(v, isMoeda) {
+    if (!isMoeda) return Math.round(v);
+    v = Math.round(v * 100) / 100;
+    if (v >= 1000) return 'R$' + (v/1000).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:1}) + 'K';
+    return 'R$' + v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+  },
+
+  barras(canvasId, labels, dados, cor, isMoeda) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -1427,7 +1434,7 @@ const CHART = {
     const st = CHART._style();
     cor = cor || st.accent;
     const max = Math.max(...dados, 1);
-    const pad = {l:36,r:10,t:14,b:38};
+    const pad = {l: isMoeda ? 54 : 36, r:10, t:14, b:38};
     const areaW = W - pad.l - pad.r;
     const areaH = H - pad.t - pad.b;
     const gap  = areaW / Math.max(labels.length,1);
@@ -1438,7 +1445,7 @@ const CHART = {
       const y = pad.t + areaH * (1 - i/4);
       ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
       ctx.fillStyle = st.muted; ctx.font = '9px Montserrat,sans-serif'; ctx.textAlign='right';
-      ctx.fillText(Math.round(max*i/4), pad.l-4, y+3);
+      ctx.fillText(CHART._fmtLabel(max*i/4, isMoeda), pad.l-4, y+3);
     }
     dados.forEach((v,i) => {
       const x = pad.l + gap*i + gap/2 - barW/2;
@@ -1449,7 +1456,7 @@ const CHART = {
       ctx.fill();
       ctx.fillStyle = st.muted; ctx.font = '9px Montserrat,sans-serif'; ctx.textAlign='center';
       ctx.fillText(labels[i].slice(0,3), pad.l + gap*i + gap/2, H-pad.b+13);
-      if(v>0){ctx.fillStyle=cor;ctx.font='bold 9px Montserrat,sans-serif';ctx.fillText(v,pad.l+gap*i+gap/2,y-3);}
+      if(v>0){ctx.fillStyle=cor;ctx.font='bold 9px Montserrat,sans-serif';ctx.fillText(CHART._fmtLabel(v,isMoeda),pad.l+gap*i+gap/2,y-3);}
     });
   },
 
@@ -1943,8 +1950,8 @@ const RENDER = {
       CHART.barras('r-mes-chart', MESES_LIST.map(m=>m.slice(0,3)), porMes);
       CHART.barras('r-anual-2026-chart', MESES_LIST.map(m=>m.slice(0,3)), por2026);
       CHART.barras('r-anual-2025-chart', MESES_LIST.map(m=>m.slice(0,3)), por2025, '#3b82f6');
-      CHART.barras('r-receita-hon-chart', MESES_LIST.map(m=>m.slice(0,3)), honMes, '#3b82f6');
-      CHART.barras('r-receita-rec-chart', MESES_LIST.map(m=>m.slice(0,3)), recMes, '#22c55e');
+      CHART.barras('r-receita-hon-chart', MESES_LIST.map(m=>m.slice(0,3)), honMes, '#3b82f6', true);
+      CHART.barras('r-receita-rec-chart', MESES_LIST.map(m=>m.slice(0,3)), recMes, '#22c55e', true);
     });
   },
 
