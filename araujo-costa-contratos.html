@@ -796,6 +796,31 @@
       width: 100% !important;
     }
 
+    #chart-tooltip {
+      position: fixed;
+      display: none;
+      pointer-events: none;
+      z-index: 9999;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.35);
+      min-width: 130px;
+    }
+    #chart-tt-label {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+      font-family: var(--font-body);
+    }
+    #chart-tt-value {
+      font-size: .92rem;
+      font-weight: 700;
+      font-family: var(--font-body);
+    }
+
     /* ============================================================
        INSIGHT CARDS
        ============================================================ */
@@ -966,6 +991,8 @@
 <!-- ================================================================
      LOGIN SCREEN
      ================================================================ -->
+<div id="chart-tooltip"><div id="chart-tt-label"></div><div id="chart-tt-value"></div></div>
+
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">Araujo Costa</div>
@@ -1424,22 +1451,69 @@ const CHART = {
     return 'R$' + v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
   },
 
+  _bindTooltip(canvas, hits) {
+    if (!canvas) return;
+    canvas._chartHits = hits;
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const sx = canvas.width / rect.width;
+      const sy = canvas.height / rect.height;
+      const mx = (e.clientX - rect.left) * sx;
+      const my = (e.clientY - rect.top)  * sy;
+      const tt = document.getElementById('chart-tooltip');
+      const ttL = document.getElementById('chart-tt-label');
+      const ttV = document.getElementById('chart-tt-value');
+      const hit = (canvas._chartHits || []).find(h => {
+        if (h.type === 'bar' || h.type === 'barH')
+          return mx >= h.x && mx <= h.x+h.w && my >= h.y && my <= h.y+h.h;
+        if (h.type === 'arc') {
+          const dx = mx-h.cx, dy = my-h.cy;
+          const d = Math.sqrt(dx*dx+dy*dy);
+          if (d < h.innerR || d > h.outerR) return false;
+          let a = Math.atan2(dy, dx);
+          if (a < -Math.PI/2) a += 2*Math.PI;
+          return a >= h.sa && a < h.ea;
+        }
+        return false;
+      });
+      if (hit && tt && ttL && ttV) {
+        ttL.textContent = hit.label;
+        ttV.textContent = hit.val;
+        ttV.style.color = hit.cor || 'var(--accent)';
+        tt.style.display = 'block';
+        // keep inside viewport
+        const tw = tt.offsetWidth || 150, th = tt.offsetHeight || 60;
+        let lx = e.clientX + 16, ly = e.clientY - 20;
+        if (lx + tw > window.innerWidth  - 8) lx = e.clientX - tw - 10;
+        if (ly + th > window.innerHeight - 8) ly = e.clientY - th - 10;
+        tt.style.left = lx + 'px';
+        tt.style.top  = ly + 'px';
+      } else if (tt) {
+        tt.style.display = 'none';
+      }
+    };
+    canvas.onmouseleave = () => {
+      const tt = document.getElementById('chart-tooltip');
+      if (tt) tt.style.display = 'none';
+    };
+  },
+
   barras(canvasId, labels, dados, cor, isMoeda) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const W = canvas.width = canvas.offsetWidth || 400;
-    const H = canvas.height = 200;
+    const H = canvas.height = 280;
     ctx.clearRect(0,0,W,H);
     const st = CHART._style();
     cor = cor || st.accent;
     const max = Math.max(...dados, 1);
-    const pad = {l: isMoeda ? 54 : 36, r:10, t:14, b:38};
+    const pad = {l: isMoeda ? 58 : 36, r:10, t:18, b:38};
     const areaW = W - pad.l - pad.r;
     const areaH = H - pad.t - pad.b;
     const gap  = areaW / Math.max(labels.length,1);
-    const barW = Math.max(6, gap * 0.55);
-    // gridlines
+    const barW = Math.max(8, gap * 0.58);
+    const hits = [];
     ctx.strokeStyle = st.border; ctx.lineWidth = 1;
     for (let i=0; i<=4; i++) {
       const y = pad.t + areaH * (1 - i/4);
@@ -1448,41 +1522,54 @@ const CHART = {
       ctx.fillText(CHART._fmtLabel(max*i/4, isMoeda), pad.l-4, y+3);
     }
     dados.forEach((v,i) => {
-      const x = pad.l + gap*i + gap/2 - barW/2;
-      const h = Math.max((v/max)*areaH, v>0?2:0);
-      const y = pad.t + areaH - h;
+      const bx = pad.l + gap*i + gap/2 - barW/2;
+      const bh = Math.max((v/max)*areaH, v>0?3:0);
+      const by = pad.t + areaH - bh;
       ctx.fillStyle = cor;
-      if(ctx.roundRect) ctx.roundRect(x,y,barW,h,3); else ctx.rect(x,y,barW,h);
+      if(ctx.roundRect) ctx.roundRect(bx,by,barW,bh,4); else ctx.rect(bx,by,barW,bh);
       ctx.fill();
-      ctx.fillStyle = st.muted; ctx.font = '9px Montserrat,sans-serif'; ctx.textAlign='center';
-      ctx.fillText(labels[i].slice(0,3), pad.l + gap*i + gap/2, H-pad.b+13);
-      if(v>0){ctx.fillStyle=cor;ctx.font='bold 9px Montserrat,sans-serif';ctx.fillText(CHART._fmtLabel(v,isMoeda),pad.l+gap*i+gap/2,y-3);}
+      ctx.fillStyle = st.muted; ctx.font = '10px Montserrat,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(labels[i].slice(0,3), pad.l + gap*i + gap/2, H-pad.b+14);
+      if(v>0){
+        ctx.fillStyle=cor; ctx.font='bold 10px Montserrat,sans-serif';
+        ctx.fillText(CHART._fmtLabel(v,isMoeda), pad.l+gap*i+gap/2, by-4);
+        hits.push({type:'bar', x:bx, y:by, w:barW, h:bh, label:labels[i], cor,
+          val: isMoeda ? UTILS.fmtMoeda(Math.round(v*100)/100) : Math.round(v) + ' contrato(s)'});
+      }
     });
+    CHART._bindTooltip(canvas, hits);
   },
 
   donut(canvasId, labels, dados) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const SIZE = 150;
+    const SIZE = 160;
     canvas.width = SIZE; canvas.height = SIZE;
     ctx.clearRect(0,0,SIZE,SIZE);
     const total = dados.reduce((a,b)=>a+b,0);
     if (!total) return;
     const st = CHART._style();
+    const cx = SIZE/2, cy = SIZE/2, outerR = SIZE/2-4, innerR = SIZE/2-30;
+    const hits = [];
     let ang = -Math.PI/2;
     dados.forEach((v,i) => {
       const slice = (v/total)*2*Math.PI;
-      ctx.beginPath(); ctx.moveTo(SIZE/2,SIZE/2);
-      ctx.arc(SIZE/2,SIZE/2,SIZE/2-4,ang,ang+slice); ctx.closePath();
+      const sa = ang, ea = ang + slice;
+      ctx.beginPath(); ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,outerR,sa,ea); ctx.closePath();
       ctx.fillStyle = CHART.cores[i%CHART.cores.length]; ctx.fill();
+      hits.push({type:'arc', cx, cy, innerR, outerR, sa, ea,
+        label: labels[i], cor: CHART.cores[i%CHART.cores.length],
+        val: v + ' contrato(s)'});
       ang += slice;
     });
-    ctx.beginPath(); ctx.arc(SIZE/2,SIZE/2,SIZE/2-28,0,2*Math.PI);
+    ctx.beginPath(); ctx.arc(cx,cy,innerR,0,2*Math.PI);
     ctx.fillStyle = st.bg2; ctx.fill();
     ctx.fillStyle = st.text; ctx.font='bold 16px Montserrat,sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(total, SIZE/2, SIZE/2);
+    ctx.fillText(total, cx, cy);
+    CHART._bindTooltip(canvas, hits);
   },
 
   barrasH(canvasId, labels, dados) {
@@ -1490,23 +1577,28 @@ const CHART = {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const W = canvas.width = canvas.offsetWidth || 400;
-    const rowH = 34;
+    const rowH = 40;
     const H = canvas.height = labels.length * rowH + 16;
     ctx.clearRect(0,0,W,H);
     const max = Math.max(...dados,1);
     const st = CHART._style();
     const padL = Math.min(160, W*0.38);
+    const hits = [];
     labels.forEach((lbl,i) => {
       const y = 8 + i*rowH;
-      const barW = ((dados[i]||0)/max)*(W-padL-50);
+      const bw = ((dados[i]||0)/max)*(W-padL-54);
       ctx.fillStyle = st.muted; ctx.font='11px Montserrat,sans-serif'; ctx.textAlign='right';
-      ctx.fillText(lbl.slice(0,22), padL-8, y+17);
+      ctx.fillText(lbl.slice(0,22), padL-8, y+19);
       ctx.fillStyle = CHART.cores[i%CHART.cores.length];
-      if(ctx.roundRect) ctx.roundRect(padL,y+4,Math.max(barW,2),22,3); else ctx.rect(padL,y+4,Math.max(barW,2),22);
+      if(ctx.roundRect) ctx.roundRect(padL,y+5,Math.max(bw,2),24,4); else ctx.rect(padL,y+5,Math.max(bw,2),24);
       ctx.fill();
       ctx.fillStyle = st.text; ctx.font='bold 10px Montserrat,sans-serif'; ctx.textAlign='left';
-      ctx.fillText(dados[i], padL+barW+6, y+18);
+      ctx.fillText(dados[i], padL+bw+8, y+20);
+      hits.push({type:'barH', x:padL, y:y+5, w:Math.max(bw,2), h:24,
+        label:lbl, cor: CHART.cores[i%CHART.cores.length],
+        val: dados[i] + ' contrato(s)'});
     });
+    CHART._bindTooltip(canvas, hits);
   }
 };
 
