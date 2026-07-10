@@ -1067,7 +1067,7 @@
       <div class="form-grid-2">
         <div class="form-row">
           <label>Honorários (R$)</label>
-          <input type="number" id="form-honorarios" placeholder="0,00" min="0" step="0.01">
+          <input type="text" id="form-honorarios" placeholder="R$ 0,00" inputmode="numeric" oninput="UTILS.maskMoeda(this)">
           <div id="hon-sugestao" style="display:none;margin-top:6px;padding:8px 10px;border-radius:6px;background:rgba(196,150,42,.1);border:1px solid rgba(196,150,42,.3);font-size:.75rem;color:var(--gold);align-items:center;justify-content:space-between;gap:8px">
             <span id="hon-sugestao-txt"></span>
             <button type="button" onclick="CRUD.usarMinimoOAB()" style="font-size:.72rem;padding:3px 10px;border-radius:4px;background:var(--gold);color:var(--bg);border:none;cursor:pointer;font-family:var(--font-body);white-space:nowrap;font-weight:600">Usar mínimo</button>
@@ -1075,12 +1075,12 @@
         </div>
         <div class="form-row">
           <label>Valor Esperado (R$)</label>
-          <input type="number" id="form-esperado" placeholder="0,00" min="0" step="0.01">
+          <input type="text" id="form-esperado" placeholder="R$ 0,00" inputmode="numeric" oninput="UTILS.maskMoeda(this)">
         </div>
       </div>
       <div class="form-row">
         <label>Valor Recebido (R$)</label>
-        <input type="number" id="form-recebido" placeholder="0,00" min="0" step="0.01">
+        <input type="text" id="form-recebido" placeholder="R$ 0,00" inputmode="numeric" oninput="UTILS.maskMoeda(this)">
       </div>
       <div class="form-row">
         <label>Observação</label>
@@ -1153,6 +1153,28 @@ const UTILS = {
     if (!causa) return null;
     const tabela = STORAGE.getHonorarios();
     return tabela.find(h => Array.isArray(h.causas) && h.causas.includes(causa)) || null;
+  },
+  // Máscara monetária: converte enquanto o usuário digita → "R$ 2.659,65"
+  maskMoeda(el) {
+    const raw = el.value.replace(/\D/g, '');
+    if (!raw) { el.value = ''; return; }
+    const cents = parseInt(raw, 10);
+    const reais = Math.floor(cents / 100);
+    const centavos = String(cents % 100).padStart(2, '0');
+    el.value = 'R$ ' + reais.toLocaleString('pt-BR') + ',' + centavos;
+  },
+  // Converte float para string mascarada
+  toMaskMoeda(v) {
+    const num = parseFloat(v) || 0;
+    const cents = Math.round(num * 100);
+    const reais = Math.floor(cents / 100);
+    const centavos = String(cents % 100).padStart(2, '0');
+    return 'R$ ' + reais.toLocaleString('pt-BR') + ',' + centavos;
+  },
+  // Converte string mascarada de volta para float
+  parseMoeda(str) {
+    if (str === '' || str === null || str === undefined) return 0;
+    return parseFloat(String(str).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
   }
 };
 
@@ -2276,9 +2298,9 @@ const CRUD = {
     document.getElementById('form-id').value       = c.id;
     document.getElementById('form-cliente').value  = c.cliente || '';
     document.getElementById('form-data').value     = c.data    || '';
-    document.getElementById('form-honorarios').value = c.honorarios || 0;
-    document.getElementById('form-esperado').value   = c.valor_esperado || 0;
-    document.getElementById('form-recebido').value   = c.valor_recebido || 0;
+    document.getElementById('form-honorarios').value = UTILS.toMaskMoeda(c.honorarios);
+    document.getElementById('form-esperado').value   = UTILS.toMaskMoeda(c.valor_esperado);
+    document.getElementById('form-recebido').value   = UTILS.toMaskMoeda(c.valor_recebido);
     document.getElementById('form-obs').value        = c.observacao || '';
     CRUD._popularSelects(c);
     document.getElementById('modal-contrato').classList.add('open');
@@ -2307,7 +2329,7 @@ const CRUD = {
     const entry = UTILS.getMinimoOAB(causa);
     if (entry) {
       const el = document.getElementById('form-honorarios');
-      if (el) el.value = entry.minimo;
+      if (el) el.value = UTILS.toMaskMoeda(entry.minimo);
     }
   },
 
@@ -2319,9 +2341,9 @@ const CRUD = {
     const causa   = document.getElementById('form-causa').value;
     const origem  = document.getElementById('form-origem').value;
     const status  = document.getElementById('form-status').value;
-    const honorarios     = parseFloat(document.getElementById('form-honorarios').value)||0;
-    const valor_esperado = parseFloat(document.getElementById('form-esperado').value)||0;
-    const valor_recebido = parseFloat(document.getElementById('form-recebido').value)||0;
+    const honorarios     = UTILS.parseMoeda(document.getElementById('form-honorarios').value);
+    const valor_esperado = UTILS.parseMoeda(document.getElementById('form-esperado').value);
+    const valor_recebido = UTILS.parseMoeda(document.getElementById('form-recebido').value);
     const observacao     = document.getElementById('form-obs').value.trim();
 
     const MESES_ARR = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -2427,8 +2449,9 @@ const CONFIG = {
           </div>
           <div style="flex-shrink:0;text-align:right">
             <div style="font-size:.67rem;color:var(--muted);margin-bottom:4px">Mínimo OAB/PA (R$)</div>
-            <input type="number" value="${h.minimo}" min="0" step="0.01"
-              style="width:130px;text-align:right;font-size:.88rem;font-weight:700;color:var(--accent);background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:5px 10px;font-family:var(--font-body)"
+            <input type="text" inputmode="numeric" value="${UTILS.toMaskMoeda(h.minimo)}"
+              style="width:140px;text-align:right;font-size:.85rem;font-weight:700;color:var(--accent);background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:5px 10px;font-family:var(--font-body)"
+              oninput="UTILS.maskMoeda(this)"
               onchange="CONFIG.salvarHonorarioMinimo('${h.id}', this.value)">
           </div>
         </div>
@@ -2439,7 +2462,7 @@ const CONFIG = {
     const tabela = STORAGE.getHonorarios();
     const entry = tabela.find(h => h.id === id);
     if (entry) {
-      entry.minimo = parseFloat(valor) || 0;
+      entry.minimo = UTILS.parseMoeda(valor);
       STORAGE.setHonorarios(tabela);
     }
   },
