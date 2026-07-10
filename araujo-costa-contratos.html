@@ -15,6 +15,7 @@
       --r: 12px;
       --rs: 8px;
       --sidebar-w: 220px;
+      --bottom-nav-h: 60px;
       --green: #22c55e; --green-d: #14532d;
       --red: #ef4444; --red-d: #7f1d1d;
       --blue: #3b82f6; --blue-d: #1e3a8a;
@@ -977,12 +978,206 @@
       background: var(--muted);
     }
 
+    /* ============================================================
+       MOBILE — BOTTOM NAV
+       ============================================================ */
     @media (max-width: 768px) {
-      :root { --sidebar-w: 0px; }
+      :root { --sidebar-w: 0px; --bottom-nav-h: 60px; }
+
+      /* Oculta sidebar lateral */
       #sidebar { display: none; }
+
+      /* App ocupa tela cheia */
       #app.visible { flex-direction: column; }
-      .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      #main { margin-left: 0; padding-bottom: var(--bottom-nav-h); }
+
+      /* Header compacto */
+      #header { padding: 12px 16px; }
+      .header-title { font-size: 1rem; }
+
+      /* Content sem padding lateral excessivo */
+      #content { padding: 16px; }
+
+      /* Grids responsivos */
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
       .table-wrap { overflow-x: auto; }
+
+      /* Modal ocupa tela quase cheia */
+      .modal-overlay { padding: 0; align-items: flex-end; }
+      .modal {
+        border-radius: var(--r) var(--r) 0 0;
+        max-width: 100%;
+        max-height: 92vh;
+      }
+
+      /* section-header empilha em telas pequenas */
+      .section-header { flex-direction: column; gap: 10px; }
+      .section-header .btn { width: 100%; justify-content: center; }
+    }
+
+    @media (max-width: 480px) {
+      .grid-4, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Bottom Navigation Bar ── */
+    #bottom-nav {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      #bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: var(--bottom-nav-h);
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+        z-index: 200;
+        align-items: stretch;
+      }
+
+      .bn-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-family: var(--font-body);
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        padding: 6px 0 8px;
+        transition: color .15s;
+        -webkit-tap-highlight-color: transparent;
+        min-height: 44px;
+      }
+
+      .bn-item svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.75;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex-shrink: 0;
+      }
+
+      .bn-item.active {
+        color: var(--accent);
+      }
+
+      .bn-item:active {
+        opacity: .7;
+      }
+    }
+
+    /* ── Drawer "Todos" — oculto no desktop ── */
+    #todos-overlay,
+    #todos-drawer {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      #todos-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        z-index: 300;
+      }
+
+      #todos-overlay.open {
+        display: block;
+      }
+
+      #todos-drawer {
+        display: block;
+        position: fixed;
+        bottom: var(--bottom-nav-h);
+        left: 0;
+        right: 0;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-bottom: none;
+        border-radius: var(--r) var(--r) 0 0;
+        z-index: 301;
+        padding: 8px 0 12px;
+        transform: translateY(110%);
+        transition: transform .25s cubic-bezier(.4,0,.2,1);
+      }
+
+      #todos-drawer.open {
+        transform: translateY(0);
+      }
+    }
+
+    .todos-handle {
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      margin: 0 auto 12px;
+    }
+
+    .todos-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 14px 24px;
+      cursor: pointer;
+      transition: background .12s, color .12s;
+      text-align: left;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 44px;
+    }
+
+    .todos-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .todos-item:hover,
+    .todos-item:active {
+      background: var(--bg3);
+      color: var(--text);
+    }
+
+    .todos-item.active {
+      color: var(--accent);
+    }
+
+    .todos-item.sair {
+      color: var(--red, #ef4444);
+      border-top: 1px solid var(--border);
+      margin-top: 4px;
+    }
+
+    .todos-item.sair:hover {
+      background: rgba(239,68,68,.08);
     }
   </style>
 </head>
@@ -1054,6 +1249,48 @@
     </header>
     <div id="content"></div>
   </div>
+</div>
+
+<!-- ================================================================
+     BOTTOM NAVIGATION (mobile)
+     ================================================================ -->
+<nav id="bottom-nav">
+  <button class="bn-item active" data-section="dashboard" onclick="NAV.ir('dashboard')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="bn-item" data-section="clientes" onclick="NAV.ir('clientes')">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="18" cy="8" r="2.5"/><path d="M21 20c0-2.5-1.6-4.6-4-5.4"/></svg>
+    Clientes
+  </button>
+  <button class="bn-item" data-section="relatorios" onclick="NAV.ir('relatorios')">
+    <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+    Relatórios
+  </button>
+  <button class="bn-item" data-section="ia" onclick="NAV.ir('ia')">
+    <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4c0 1.4-.7 2.6-1.8 3.3L16 21H8l1.8-11.7A4 4 0 0 1 8 6a4 4 0 0 1 4-4z"/><path d="M9 21h6"/><circle cx="12" cy="6" r="1" fill="currentColor" stroke="none"/></svg>
+    IA
+  </button>
+  <button class="bn-item" id="bn-todos" onclick="BOTTOM_NAV.toggleDrawer()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    Todos
+  </button>
+</nav>
+
+<!-- Overlay do drawer Todos -->
+<div id="todos-overlay" onclick="BOTTOM_NAV.fecharDrawer()"></div>
+
+<!-- Drawer Todos -->
+<div id="todos-drawer">
+  <div class="todos-handle"></div>
+  <button class="todos-item" data-section="config" onclick="NAV.ir('config');BOTTOM_NAV.fecharDrawer()">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Configurações
+  </button>
+  <button class="todos-item sair" onclick="AUTH.logout()">
+    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sair
+  </button>
 </div>
 
 <!-- ================================================================
@@ -1449,6 +1686,8 @@ const NAV = {
       b.classList.toggle('active', b.dataset.section === secao);
     });
     document.getElementById('header-title').textContent = NAV.titulos[secao] || secao;
+    // Sincroniza bottom nav
+    BOTTOM_NAV.setActive(secao);
     const renders = {
       dashboard: RENDER.dashboard,
       clientes:  RENDER.clientes,
@@ -1457,6 +1696,50 @@ const NAV = {
       config:    RENDER.config
     };
     if (renders[secao]) renders[secao]();
+  }
+};
+
+// ═══════════════════════════════════════════════
+// BOTTOM NAV (mobile)
+// ═══════════════════════════════════════════════
+const BOTTOM_NAV = {
+  // Seções que aparecem diretamente na barra (os 4 primeiros slots)
+  _diretos: ['dashboard','clientes','relatorios','ia'],
+
+  setActive(secao) {
+    // Atualiza itens da barra
+    document.querySelectorAll('#bottom-nav .bn-item').forEach(b => {
+      b.classList.remove('active');
+    });
+    // Se é uma seção direta, ativa o botão correspondente
+    const btn = document.querySelector(`#bottom-nav .bn-item[data-section="${secao}"]`);
+    if (btn) btn.classList.add('active');
+    // Se é config (está no drawer), destaca o botão "Todos"
+    const todosBtn = document.getElementById('bn-todos');
+    if (todosBtn) {
+      todosBtn.classList.toggle('active', !BOTTOM_NAV._diretos.includes(secao));
+    }
+    // Atualiza o item ativo dentro do drawer
+    document.querySelectorAll('#todos-drawer .todos-item').forEach(b => {
+      b.classList.toggle('active', b.dataset.section === secao);
+    });
+  },
+
+  toggleDrawer() {
+    const overlay = document.getElementById('todos-overlay');
+    const drawer  = document.getElementById('todos-drawer');
+    const isOpen  = overlay.classList.contains('open');
+    if (isOpen) {
+      BOTTOM_NAV.fecharDrawer();
+    } else {
+      overlay.classList.add('open');
+      drawer.classList.add('open');
+    }
+  },
+
+  fecharDrawer() {
+    document.getElementById('todos-overlay').classList.remove('open');
+    document.getElementById('todos-drawer').classList.remove('open');
   }
 };
 
