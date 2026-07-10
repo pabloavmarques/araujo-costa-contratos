@@ -1113,7 +1113,8 @@
         border-radius: var(--r) var(--r) 0 0;
         z-index: 301;
         padding: 8px 0 12px;
-        transform: translateY(110%);
+        /* desloca para baixo o suficiente para sumir: altura própria + bottom-nav + folga */
+        transform: translateY(calc(100% + var(--bottom-nav-h) + 20px));
         transition: transform .25s cubic-bezier(.4,0,.2,1);
       }
 
