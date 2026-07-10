@@ -1057,7 +1057,7 @@
       <div class="form-grid-2">
         <div class="form-row">
           <label>Causa</label>
-          <select id="form-causa"></select>
+          <select id="form-causa" onchange="CRUD.atualizarSugestaoHon()"></select>
         </div>
         <div class="form-row">
           <label>Origem</label>
@@ -1068,6 +1068,10 @@
         <div class="form-row">
           <label>Honorários (R$)</label>
           <input type="number" id="form-honorarios" placeholder="0,00" min="0" step="0.01">
+          <div id="hon-sugestao" style="display:none;margin-top:6px;padding:8px 10px;border-radius:6px;background:rgba(196,150,42,.1);border:1px solid rgba(196,150,42,.3);font-size:.75rem;color:var(--gold);align-items:center;justify-content:space-between;gap:8px">
+            <span id="hon-sugestao-txt"></span>
+            <button type="button" onclick="CRUD.usarMinimoOAB()" style="font-size:.72rem;padding:3px 10px;border-radius:4px;background:var(--gold);color:var(--bg);border:none;cursor:pointer;font-family:var(--font-body);white-space:nowrap;font-weight:600">Usar mínimo</button>
+          </div>
         </div>
         <div class="form-row">
           <label>Valor Esperado (R$)</label>
@@ -1144,6 +1148,11 @@ const UTILS = {
   async sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
     return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  },
+  getMinimoOAB(causa) {
+    if (!causa) return null;
+    const tabela = STORAGE.getHonorarios();
+    return tabela.find(h => Array.isArray(h.causas) && h.causas.includes(causa)) || null;
   }
 };
 
@@ -1359,6 +1368,22 @@ const DADOS_INICIAIS = [
 // ═══════════════════════════════════════════════
 // DEFAULTS de referência
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// TABELA DE HONORÁRIOS — OAB/PA Resolução 23
+// ═══════════════════════════════════════════════
+const DEFAULT_HONORARIOS = [
+  { id:'hon1', codigo:'XIX.1.1', descricao:'Aposentadoria (por Invalidez, Idade Rural, Rural, APSI, APTC) / Pensão por Morte', percentual:30, base:'30% retroativas + 12 meses futuros', minimo:4290.00, causas:['Aposentadoria por Invalidez','Aposentadoria por Idade Rural','Aposentadoria Rural','APSI','APTC','Pensão por Morte'] },
+  { id:'hon2', codigo:'XIX.1.2', descricao:'Auxílio Doença / Benefício por Incapacidade Temporária', percentual:30, base:'30% meses concedidos pela perícia', minimo:2659.65, causas:['Auxílio Doença','Auxílio Doença Rural','Auxílio Doença Urbano'] },
+  { id:'hon3', codigo:'XIX.1.4', descricao:'Auxílio Acidente e Auxílio Reclusão', percentual:30, base:'30% retroativas + 12 meses futuros', minimo:2659.65, causas:['Auxílio Acidente'] },
+  { id:'hon4', codigo:'XIX.SM', descricao:'Salário Maternidade (Urbano e Rural) / Auxílio Maternidade / Seguro Defeso', percentual:30, base:'30% parcelas concedidas', minimo:1500.00, causas:['Salário Maternidade','Salário Maternidade Rural','Salário Maternidade Urbano','Auxílio Maternidade','Seguro Defeso'] },
+  { id:'hon5', codigo:'XIX.1.5', descricao:'BPC / LOAS / Auxílio Inclusão', percentual:30, base:'30% retroativas + 12 meses futuros', minimo:1650.00, causas:['BPC'] },
+  { id:'hon6', codigo:'XIX.3.1', descricao:'Planejamento Previdenciário', percentual:0, base:'Valor fixo por parecer', minimo:3000.00, causas:['Planejamento Previdenciário'] },
+  { id:'hon7', codigo:'XXI.1',   descricao:'Reclamação Trabalhista', percentual:20, base:'20% valor bruto da condenação ou acordo', minimo:1751.89, causas:['Trabalhista'] },
+  { id:'hon8', codigo:'XIV.18.1',descricao:'Ação de Alimentos / Pensão Alimentícia (credor)', percentual:10, base:'10% sobre 6 meses de pensão', minimo:2773.82, causas:['Pensão Alimentícia','Ação de Alimentos'] },
+  { id:'hon9', codigo:'XIV.18.4',descricao:'Execução de Sentença de Alimentos', percentual:10, base:'10% sobre a verba recebida', minimo:1970.88, causas:['Execução de Alimentos'] },
+  { id:'hon10',codigo:'XII.1',   descricao:'Ação Cível / Cobrança / Consumidor', percentual:20, base:'20% sobre o valor da condenação', minimo:3211.80, causas:['Ação de Cobrança','Consumidor','Outros'] },
+];
+
 const DEFAULT_CAUSAS = [
   'Planejamento Previdenciário','Auxílio Doença','Auxílio Doença Rural','Auxílio Doença Urbano',
   'Salário Maternidade','Salário Maternidade Rural','Salário Maternidade Urbano',
@@ -1388,6 +1413,8 @@ const STORAGE = {
   setCausas(v)     { STORAGE.set('ac_causas', v); },
   setOrigens(v)    { STORAGE.set('ac_origens', v); },
   setStatusList(v) { STORAGE.set('ac_status_lista', v); },
+  getHonorarios()  { return STORAGE.get('ac_honorarios', DEFAULT_HONORARIOS); },
+  setHonorarios(v) { STORAGE.set('ac_honorarios', v); },
 
   getConfig() {
     return STORAGE.get('ac_config', {
@@ -1673,6 +1700,16 @@ const RENDER = {
     const totalRec = c.reduce((s,x)=>s+(parseFloat(x.valor_recebido)||0),0);
     const totalEsp = c.reduce((s,x)=>s+(parseFloat(x.valor_esperado)||0),0);
     const aReceber = Math.max(0, totalEsp-totalRec);
+    const andamentoC = c.filter(x=>x.status==='Em Andamento');
+    let minimoOABCarteira = 0, abaixoMinimo = 0;
+    andamentoC.forEach(x => {
+      const entry = UTILS.getMinimoOAB(x.causa);
+      if (entry) {
+        minimoOABCarteira += entry.minimo;
+        const hon = parseFloat(x.honorarios)||0;
+        if (hon > 0 && hon < entry.minimo) abaixoMinimo++;
+      }
+    });
     const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     const porMes = MESES.map(m=>c.filter(x=>x.mes===m).length);
     const causaCount={};
@@ -1720,6 +1757,24 @@ const RENDER = {
         <div class="card">
           <div class="card-label">A Receber</div>
           <div class="card-value t-gold" style="font-size:1.3rem">${UTILS.fmtMoeda(aReceber)}</div>
+        </div>
+      </div>
+      <div class="card-grid grid-2 mb-4">
+        <div class="card">
+          <div class="card-label" style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 9l9-6 9 6"/><path d="M6 12v6a3 3 0 0 0 6 0v-6"/><path d="M12 12v6a3 3 0 0 0 6 0v-6"/><line x1="3" y1="22" x2="21" y2="22"/></svg>
+            Mínimo OAB/PA em Carteira
+          </div>
+          <div class="card-value" style="font-size:1.2rem;color:var(--accent)">${UTILS.fmtMoeda(minimoOABCarteira)}</div>
+          <div class="card-sub">Soma dos mínimos da Res. 23 — contratos em andamento</div>
+        </div>
+        <div class="card">
+          <div class="card-label" style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Abaixo do Mínimo OAB/PA
+          </div>
+          <div class="card-value" style="font-size:1.2rem;color:${abaixoMinimo>0?'var(--yellow)':'var(--green)'}">${abaixoMinimo}</div>
+          <div class="card-sub">${abaixoMinimo>0?'contrato(s) com honorários abaixo do mínimo da Res. 23':'todos os contratos respeitam o mínimo OAB/PA'}</div>
         </div>
       </div>
       <div class="card-grid grid-2 mb-4">
@@ -1857,20 +1912,28 @@ const RENDER = {
 
     const tbody = document.getElementById('tbody-contratos');
     if(!tbody) return;
-    tbody.innerHTML = filtrados.length ? filtrados.map(c=>`
+    tbody.innerHTML = filtrados.length ? filtrados.map(c=>{
+      const minimoEntry = UTILS.getMinimoOAB(c.causa);
+      const hon = parseFloat(c.honorarios)||0;
+      const abaixoMin = minimoEntry && hon > 0 && hon < minimoEntry.minimo;
+      return `
       <tr>
         <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${UTILS.escapeHtml(c.cliente)}">${UTILS.escapeHtml(c.cliente)}</td>
         <td style="white-space:nowrap">${UTILS.escapeHtml(c.data||'')}</td>
         <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${UTILS.escapeHtml(c.causa||'')}">${UTILS.escapeHtml(c.causa||'')}</td>
         <td style="white-space:nowrap">${UTILS.escapeHtml(c.origem||'')}</td>
         <td>${UTILS.badgeStatus(c.status)}</td>
-        <td style="text-align:right;white-space:nowrap">${UTILS.fmtMoeda(c.honorarios)}</td>
+        <td style="text-align:right;white-space:nowrap">
+          ${UTILS.fmtMoeda(c.honorarios)}
+          ${abaixoMin?`<span title="Abaixo do mínimo OAB/PA: ${UTILS.fmtMoeda(minimoEntry.minimo)}" style="color:var(--yellow);margin-left:3px;cursor:help">⚠</span>`:''}
+        </td>
         <td style="text-align:right;white-space:nowrap">${UTILS.fmtMoeda(c.valor_recebido)}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-sm btn-secondary" onclick="CRUD.editar('${c.id}')" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="btn btn-sm btn-danger" onclick="CRUD.confirmarExcluir('${c.id}')" title="Excluir"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </td>
-      </tr>`).join('')
+      </tr>`;
+    }).join('')
     : `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">Nenhum contrato encontrado com os filtros selecionados.</td></tr>`;
 
     const info = document.getElementById('tabela-info');
@@ -2144,6 +2207,15 @@ const RENDER = {
         <button class="btn btn-secondary btn-sm" style="margin-top:12px" onclick="CONFIG.addItem('status')">+ Adicionar</button>
       </div>
 
+      <div class="card mb-4">
+        <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M3 9l9-6 9 6"/><path d="M6 12v6a3 3 0 0 0 6 0v-6"/><path d="M12 12v6a3 3 0 0 0 6 0v-6"/><line x1="3" y1="22" x2="21" y2="22"/></svg> Honorários OAB/PA — Resolução 23</span>
+          <button class="btn btn-secondary btn-sm" onclick="CONFIG.restaurarHonorarios()">Restaurar padrões</button>
+        </div>
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:12px">Valores mínimos conforme a Resolução 23 OAB/PA. Edite o mínimo diretamente no campo e ele será salvo automaticamente.</div>
+        <div id="lista-honorarios"></div>
+      </div>
+
       <div class="card">
         <div class="card-label" style="margin-bottom:16px;font-size:.8rem;display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg> Dados (${contratos.length} contratos)</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
@@ -2158,6 +2230,7 @@ const RENDER = {
     `;
     CONFIG._renderTemaBtns();
     CONFIG.renderListas();
+    CONFIG.renderHonorarios();
   },
 };
 
@@ -2193,7 +2266,7 @@ const CRUD = {
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     CRUD._popularSelects(null);
     document.getElementById('modal-contrato').classList.add('open');
-    setTimeout(()=>document.getElementById('form-cliente')?.focus(), 50);
+    setTimeout(()=>{ document.getElementById('form-cliente')?.focus(); CRUD.atualizarSugestaoHon(); }, 50);
   },
 
   editar(id) {
@@ -2209,10 +2282,33 @@ const CRUD = {
     document.getElementById('form-obs').value        = c.observacao || '';
     CRUD._popularSelects(c);
     document.getElementById('modal-contrato').classList.add('open');
+    setTimeout(()=>CRUD.atualizarSugestaoHon(), 50);
   },
 
   fecharModal() {
     document.getElementById('modal-contrato').classList.remove('open');
+  },
+
+  atualizarSugestaoHon() {
+    const causa = document.getElementById('form-causa')?.value;
+    const entry = UTILS.getMinimoOAB(causa);
+    const el  = document.getElementById('hon-sugestao');
+    const txt = document.getElementById('hon-sugestao-txt');
+    if (entry && el && txt) {
+      txt.innerHTML = `<strong>Mínimo OAB/PA (Res.23 — ${UTILS.escapeHtml(entry.codigo)}):</strong> ${UTILS.fmtMoeda(entry.minimo)} · <em>${UTILS.escapeHtml(entry.base)}</em>`;
+      el.style.display = 'flex';
+    } else if (el) {
+      el.style.display = 'none';
+    }
+  },
+
+  usarMinimoOAB() {
+    const causa = document.getElementById('form-causa')?.value;
+    const entry = UTILS.getMinimoOAB(causa);
+    if (entry) {
+      const el = document.getElementById('form-honorarios');
+      if (el) el.value = entry.minimo;
+    }
   },
 
   salvar() {
@@ -2312,6 +2408,47 @@ const CONFIG = {
     const badge = document.getElementById('tema-badge');
     if(badge) badge.textContent = nomes[tema] || tema;
     CONFIG._renderTemaBtns();
+  },
+
+  renderHonorarios() {
+    const tabela = STORAGE.getHonorarios();
+    const el = document.getElementById('lista-honorarios');
+    if (!el) return;
+    el.innerHTML = tabela.map(h => `
+      <div style="border:1px solid var(--border);border-radius:var(--rs);padding:12px;margin-bottom:8px;background:var(--bg3)">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:.75rem;color:var(--accent);font-weight:700;margin-bottom:2px">${UTILS.escapeHtml(h.codigo)}</div>
+            <div style="font-size:.82rem;color:var(--text);margin-bottom:3px">${UTILS.escapeHtml(h.descricao)}</div>
+            <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px">${UTILS.escapeHtml(h.base)}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              ${(h.causas||[]).map(c=>`<span style="font-size:.65rem;padding:2px 7px;background:var(--bg4);border-radius:3px;color:var(--muted);border:1px solid var(--border)">${UTILS.escapeHtml(c)}</span>`).join('')}
+            </div>
+          </div>
+          <div style="flex-shrink:0;text-align:right">
+            <div style="font-size:.67rem;color:var(--muted);margin-bottom:4px">Mínimo OAB/PA (R$)</div>
+            <input type="number" value="${h.minimo}" min="0" step="0.01"
+              style="width:130px;text-align:right;font-size:.88rem;font-weight:700;color:var(--accent);background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:5px 10px;font-family:var(--font-body)"
+              onchange="CONFIG.salvarHonorarioMinimo('${h.id}', this.value)">
+          </div>
+        </div>
+      </div>`).join('');
+  },
+
+  salvarHonorarioMinimo(id, valor) {
+    const tabela = STORAGE.getHonorarios();
+    const entry = tabela.find(h => h.id === id);
+    if (entry) {
+      entry.minimo = parseFloat(valor) || 0;
+      STORAGE.setHonorarios(tabela);
+    }
+  },
+
+  restaurarHonorarios() {
+    if (confirm('Restaurar todos os valores mínimos para os padrões da OAB/PA Resolução 23?')) {
+      STORAGE.setHonorarios(DEFAULT_HONORARIOS);
+      CONFIG.renderHonorarios();
+    }
   },
 
   renderListas() {
